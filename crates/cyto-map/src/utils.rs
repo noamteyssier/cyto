@@ -14,10 +14,7 @@ pub fn build_filepath<P: AsRef<Path>>(outdir: P, name: Option<&str>) -> PathBuf 
     })
 }
 
-pub fn build_filepaths<P: AsRef<Path>>(
-    outdir: P,
-    bijection: &Bijection<String>,
-) -> Result<Vec<PathBuf>> {
+pub fn build_filepaths<P: AsRef<Path>>(outdir: P, bijection: &Bijection<String>) -> Vec<PathBuf> {
     let mut filepaths = Vec::new();
     for idx in 0..bijection.len() {
         let alias_str = bijection
@@ -26,7 +23,7 @@ pub fn build_filepaths<P: AsRef<Path>>(
         let filepath = build_filepath(&outdir, Some(alias_str));
         filepaths.push(filepath);
     }
-    Ok(filepaths)
+    filepaths
 }
 
 pub fn initialize_output_ibus<P: AsRef<Path>>(

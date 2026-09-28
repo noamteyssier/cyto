@@ -296,7 +296,7 @@ where
     // Build output handles and processor
     let (proc, filepaths): (MapProcessor<M>, Vec<PathBuf>) = if let Some(probe) = probe {
         let bijection = probe.bijection();
-        let filepaths = build_filepaths(&output.outdir, &bijection)?;
+        let filepaths = build_filepaths(&output.outdir, &bijection);
         let writers = initialize_output_ibus(&filepaths, resolved)?;
         (
             MapProcessor::probed(umi, probe, whitelist, feature, writers, bijection),

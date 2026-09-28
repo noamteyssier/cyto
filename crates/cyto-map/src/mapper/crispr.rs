@@ -159,13 +159,14 @@ impl Mapper for CrisprMapper<Ready> {
                 .query_at_with_remap_offset(seq, self.anchor_pos, self.window)?;
 
         let protospacer_offset =
-            ((self.anchor_pos + mat.seq_len()) as isize + remap_offset) as usize;
+            ((self.anchor_pos + mat.seq_len()).cast_signed() + remap_offset).cast_unsigned();
 
         self.protospacer_hash
             .query_at_with_remap_offset(seq, protospacer_offset, self.window)
             .map(|(m, remap_offset)| FeatureMatch {
                 feature_idx: m.parent_idx(),
-                end_pos: ((protospacer_offset + m.seq_len()) as isize + remap_offset) as usize,
+                end_pos: ((protospacer_offset + m.seq_len()).cast_signed() + remap_offset)
+                    .cast_unsigned(),
             })
     }
 
@@ -284,8 +285,11 @@ mod tests {
         let mapper = CrisprMapper::from_file(&guides_path, false, 1).unwrap();
 
         let random_read = vec![b'N'; 80];
-        assert!(mapper.scan_anchor_positions(&random_read).is_empty());
-        assert!(mapper.scan_protospacer_positions(&random_read).is_empty());
+        assert_eq!(mapper.scan_anchor_positions(&random_read), [] as [usize; 0]);
+        assert_eq!(
+            mapper.scan_protospacer_positions(&random_read),
+            [] as [usize; 0]
+        );
     }
 
     fn gen_sequence<R: Rng>(rng: &mut R, length: usize) -> Vec<u8> {

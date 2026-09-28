@@ -181,7 +181,7 @@ impl<M: Mapper> MapProcessor<M> {
         (!pass_qual).then(|| self.t_stats.unmapped.failed_umi_qual += 1);
     }
 
-    fn _process_record(
+    fn process_record_impl(
         &mut self,
         s_seq: &[u8],
         x_seq: &[u8],
@@ -271,7 +271,7 @@ impl<M: Mapper> MapProcessor<M> {
         Ok(())
     }
 
-    fn _on_batch_complete(&mut self) -> anyhow::Result<()> {
+    fn on_batch_complete_impl(&mut self) -> anyhow::Result<()> {
         // write local (in-memory) outputs to global outputs
         {
             // Write all local output buffers to the corresponding files
@@ -308,11 +308,11 @@ fn select_mate<'a>(m1: &'a [u8], m2: &'a [u8], mate: ReadMate) -> &'a [u8] {
 
 impl<M: Mapper + Send + Sync> binseq::ParallelProcessor for MapProcessor<M> {
     fn process_record<R: binseq::BinseqRecord>(&mut self, record: R) -> binseq::Result<()> {
-        self._process_record(record.sseq(), record.xseq(), record.squal(), record.xqual())?;
+        self.process_record_impl(record.sseq(), record.xseq(), record.squal(), record.xqual())?;
         Ok(())
     }
     fn on_batch_complete(&mut self) -> binseq::Result<()> {
-        self._on_batch_complete()?;
+        self.on_batch_complete_impl()?;
         Ok(())
     }
     fn set_tid(&mut self, tid: usize) {
@@ -325,7 +325,7 @@ impl<M: Mapper + Send + Sync> binseq::ParallelProcessor for MapProcessor<M> {
 
 impl<M: Mapper + Send + Sync, Rf: paraseq::Record> PairedParallelProcessor<Rf> for MapProcessor<M> {
     fn process_record_pair(&mut self, record1: Rf, record2: Rf) -> paraseq::Result<()> {
-        self._process_record(
+        self.process_record_impl(
             record1.seq().as_ref(),
             record2.seq().as_ref(),
             record1.qual().unwrap_or_default(), // TODO: handle potentially missing quality scores
@@ -334,7 +334,7 @@ impl<M: Mapper + Send + Sync, Rf: paraseq::Record> PairedParallelProcessor<Rf> f
         Ok(())
     }
     fn on_batch_complete(&mut self) -> paraseq::Result<()> {
-        self._on_batch_complete()?;
+        self.on_batch_complete_impl()?;
         Ok(())
     }
     fn set_thread_id(&mut self, thread_id: usize) {
