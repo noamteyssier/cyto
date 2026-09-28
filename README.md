@@ -23,7 +23,7 @@ Ultra-high throughput processing for 10x Genomics Flex single-cell sequencing.
 - **Highly accurate**: 99.85% concordance with standard CellRanger outputs, identical cell clustering
 - **Modular architecture**: Independent, composable tools for flexible workflows
 - **Production-ready**: Built for atlas-scale projects and genome-wide screens
-- **[BINSEQ](https://github.com/arcinstitute/binseq) support**: Efficient binary format for highly parallel sequence parsing
+- **[BINSEQ](https://github.com/noamteyssier/binseq) support**: Efficient binary format for highly parallel sequence parsing
 - **Compact [IBU format](https://github.com/noamteyssier/ibu)**: Binary Index-Barcode-UMI storage for efficient read processing
 
 ## Installation
@@ -42,7 +42,7 @@ cargo install cyto
 Or from source:
 
 ```bash
-git clone https://github.com/arcinstitute/cyto
+git clone https://github.com/noamteyssier/cyto
 cd cyto
 
 # install with cargo
@@ -244,11 +244,13 @@ cyto workflow crispr --preset crispr-v1 ...
 ```
 
 Available presets:
-| Preset | Geometry |
-|--------|----------|
-| `gex-v1` | `[barcode][umi:12] \| [gex][:18][probe]` |
-| `gex-v2` | `[barcode][umi:12][:10][probe] \| [gex]` |
-| `crispr-v1` | `[barcode][umi:12] \| [probe][anchor][protospacer]` |
+
+| Preset      | Geometry                                                      |
+| ----------- | ------------------------------------------------------------- |
+| `gex-v1`    | `[barcode][umi:12] \| [gex][:18][probe]`                      |
+| `gex-v2`    | `[barcode][umi:12][:10][probe] \| [gex]`                      |
+| `gex-v2-r2` | `[barcode][umi:12] \| [gex][:29][probe]`                      |
+| `crispr-v1` | `[barcode][umi:12] \| [probe][anchor][protospacer]`           |
 | `crispr-v2` | `[barcode][umi:12][:10][probe] \| [:14][anchor][protospacer]` |
 
 > Note: White space is allowed between components and separators.
@@ -367,7 +369,7 @@ cyto workflow gex --geometry "..." --remap-window 0 ...
 
 > **Note**: Default is 1. For V2 presets, this is automatically set to 5.
 
-> **Pro-Tip**: If you're unsure about spacer lengths for your library, use [`bqtools grep`](https://github.com/arcinstitute/bqtools?tab=readme-ov-file#grep) to visualize your sequences:
+> **Pro-Tip**: If you're unsure about spacer lengths for your library, use [`bqtools grep`](https://github.com/noamteyssier/bqtools?tab=readme-ov-file#grep) to visualize your sequences:
 >
 > ```bash
 > bqtools grep <input.cbq> <anchor_sequence> <probe_sequence>
@@ -448,7 +450,7 @@ Generates:
 
 #### Convert to h5ad
 
-Use [pycyto](https://github.com/arcinstitute/pycyto) utilities for format conversion and aggregation:
+Use [pycyto](https://github.com/noamteyssier/pycyto) utilities for format conversion and aggregation:
 
 ```bash
 # Convert MTX to h5ad
@@ -488,10 +490,10 @@ Guide assignments are included in the count matrix output.
 
 All components are available under the MIT license:
 
-- **cyto**: https://github.com/arcinstitute/cyto
-- **pycyto utilities**: https://github.com/arcinstitute/pycyto
+- **cyto**: https://github.com/noamteyssier/cyto
+- **pycyto utilities**: https://github.com/noamteyssier/pycyto
 - **geomux**: https://github.com/noamteyssier/geomux
-- **cell-filter**: https://github.com/arcinstitute/cell-filter
+- **cell-filter**: https://github.com/noamteyssier/cell-filter
 - **IBU format**: https://github.com/noamteyssier/ibu
 
 Rust packages on crates.io | Python packages on PyPI
@@ -507,7 +509,7 @@ of 10x-flex single cell sequencing. bioRxiv.
 
 ## Support
 
-- **Issues**: https://github.com/arcinstitute/cyto/issues
+- **Issues**: https://github.com/noamteyssier/cyto/issues
 - **Documentation**: See `--help` for any command
 - **Examples**: See `justfile` for complete workflows
 
