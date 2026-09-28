@@ -19,6 +19,7 @@ struct CrisprRecord {
     protospacer: String,
 }
 
+#[derive(Clone)]
 pub struct CrisprMapper<S = Ready> {
     anchor_hash: MultiLenSeqHash,
     protospacer_hash: MultiLenSeqHash,

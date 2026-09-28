@@ -19,6 +19,7 @@ struct GexRecord {
     seq: String,
 }
 
+#[derive(Clone)]
 pub struct GexMapper<S = Ready> {
     split_hash: SplitSeqHash,
     probe_names: Vec<String>,
