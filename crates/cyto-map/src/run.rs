@@ -25,7 +25,7 @@ use crate::{
 
 fn parse_geometry(args: &cyto_cli::map::MapOptions, default: &str) -> Result<Geometry> {
     if let Some(preset) = args.preset {
-        let geometry_str = preset.into_geometry_str();
+        let geometry_str = preset.geometry_str();
         info!("Using preset ({preset:?}) geometry: `{geometry_str}`");
         Ok(geometry_str.parse()?)
     } else if let Some(ref g) = args.geometry {
