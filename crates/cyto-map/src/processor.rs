@@ -1,6 +1,7 @@
 use std::{io::Write, sync::Arc, time::Instant};
 
 use binseq::IntoBinseqError;
+use ibu::IbuRecord;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use paraseq::prelude::PairedParallelProcessor;
 use parking_lot::Mutex;

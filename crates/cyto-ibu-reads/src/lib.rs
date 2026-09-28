@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, Write},
     path::Path,
 };
 
@@ -9,7 +9,7 @@ use bitnuc::as_2bit;
 use cyto_cli::ibu::ArgsReads;
 use cyto_io::{match_input, match_output_transparent};
 use hashbrown::HashSet;
-use ibu::{Header, Reader};
+use ibu::{Header, IbuError, Reader, Record};
 use log::warn;
 use serde::Serialize;
 
@@ -66,8 +66,8 @@ fn print_record_stats<W: Write>(
     Ok(())
 }
 
-fn process_records<R: Read, W: Write>(
-    reader: &mut Reader<R>,
+fn process_records<W: Write>(
+    records: impl Iterator<Item = Result<Record, IbuError>>,
     header: &Header,
     writer: &mut csv::Writer<W>,
     whitelist: &Whitelist,
@@ -77,7 +77,7 @@ fn process_records<R: Read, W: Write>(
     let mut dbuf = Vec::new();
     let mut n_reads = 0;
     let mut n_umis = 0;
-    for record in &mut *reader {
+    for record in records {
         let record = record?;
 
         if !whitelist.matches(record.barcode) {
@@ -184,11 +184,11 @@ pub fn run(args: &ArgsReads) -> Result<()> {
         .has_headers(!args.options.no_header)
         .from_writer(output);
 
-    let mut reader = Reader::new(input)?;
+    let reader = Reader::new(input)?;
     let header = reader.header();
 
     process_records(
-        &mut reader,
+        reader.iter_records()?,
         &header,
         &mut writer,
         &whitelist,
