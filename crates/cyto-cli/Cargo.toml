@@ -14,7 +14,6 @@ anyhow = { workspace = true }
 binseq = { workspace = true }
 clap = { workspace = true }
 cyto-io = { workspace = true }
-ibu = { workspace = true }
 log = { workspace = true }
 paraseq = { workspace = true }
 
