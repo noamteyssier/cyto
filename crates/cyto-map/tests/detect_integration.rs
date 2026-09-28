@@ -1,4 +1,5 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use std::sync::LazyLock;
 
 use cyto_cli::map::MultiPairedInput;
 use cyto_map::{
@@ -15,26 +16,44 @@ fn workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
+// Building these mappers (especially the GEX split-hash over 54k probes) is the
+// dominant cost of this test file. All six tests use identical fixture files, so
+// each mapper is built once per test run and cheaply `.clone()`d per test instead
+// of being rebuilt from scratch in every test.
+
 /// Exact-match whitelist: detection only needs enough sampled reads to match,
 /// and the hamming-1 expansion of the 737k whitelist is very expensive to build.
 ///
 /// reduces runtime during the tests with minimal impact on predictions
-fn load_whitelist(root: &Path) -> WhitelistMapper<Unpositioned> {
-    let path = root.join("data/metadata/737K-fixed-rna-profiling.txt.gz");
+static WHITELIST: LazyLock<WhitelistMapper<Unpositioned>> = LazyLock::new(|| {
+    let path = workspace_root().join("data/metadata/737K-fixed-rna-profiling.txt.gz");
     WhitelistMapper::from_file(&path, true, 1, 1).unwrap()
-}
+});
+
+static GEX: LazyLock<GexMapper<Unpositioned>> = LazyLock::new(|| {
+    let path = workspace_root().join("data/libraries/gex_probes.tsv");
+    GexMapper::from_file(&path, 1).unwrap()
+});
+
+static CRISPR: LazyLock<CrisprMapper<Unpositioned>> = LazyLock::new(|| {
+    let path = workspace_root().join("data/libraries/crispr_guides.tsv");
+    CrisprMapper::from_file(&path, false, 1).unwrap()
+});
+
+static PROBE: LazyLock<ProbeMapper<Unpositioned>> = LazyLock::new(|| {
+    let path = workspace_root().join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
+    ProbeMapper::from_file(&path, false, 1).unwrap()
+});
 
 #[test]
 fn test_detect_gex_geometry_from_binseq() {
     let root = workspace_root();
 
-    let gex_path = root.join("data/libraries/gex_probes.tsv");
-    let probe_path = root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
     let input_path = root.join("data/sequencing/gex.cbq");
 
-    let whitelist = load_whitelist(&root);
-    let gex = GexMapper::from_file(&gex_path, 1).unwrap();
-    let probe: ProbeMapper<Unpositioned> = ProbeMapper::from_file(&probe_path, false, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let gex = GEX.clone();
+    let probe = PROBE.clone();
 
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
@@ -105,11 +124,10 @@ fn test_detect_gex_geometry_from_binseq() {
 fn test_detect_crispr_geometry_from_binseq() {
     let root = workspace_root();
 
-    let crispr_path = root.join("data/libraries/crispr_guides.tsv");
     let input_path = root.join("data/sequencing/crispr.cbq");
 
-    let whitelist = load_whitelist(&root);
-    let crispr = CrisprMapper::from_file(&crispr_path, false, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let crispr = CRISPR.clone();
 
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
@@ -157,11 +175,10 @@ fn test_detect_crispr_geometry_from_binseq() {
 fn test_detect_gex_geometry_unprobed() {
     let root = workspace_root();
 
-    let gex_path = root.join("data/libraries/gex_probes.tsv");
     let input_path = root.join("data/sequencing/gex.cbq");
 
-    let whitelist = load_whitelist(&root);
-    let gex = GexMapper::from_file(&gex_path, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let gex = GEX.clone();
 
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
@@ -205,13 +222,11 @@ fn test_detect_gex_geometry_unprobed() {
 fn test_detect_crispr_geometry_probed() {
     let root = workspace_root();
 
-    let crispr_path = root.join("data/libraries/crispr_guides.tsv");
-    let probe_path = root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
     let input_path = root.join("data/sequencing/crispr.cbq");
 
-    let whitelist = load_whitelist(&root);
-    let crispr = CrisprMapper::from_file(&crispr_path, false, 1).unwrap();
-    let probe: ProbeMapper<Unpositioned> = ProbeMapper::from_file(&probe_path, false, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let crispr = CRISPR.clone();
+    let probe = PROBE.clone();
 
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
@@ -270,8 +285,6 @@ fn test_detect_gex_geometry_multi_lane_binseq() {
     // ~2x faster than comparing against a separate single-lane baseline.
     let root = workspace_root();
 
-    let gex_path = root.join("data/libraries/gex_probes.tsv");
-    let probe_path = root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
     let path = root
         .join("data/sequencing/gex.cbq")
         .to_string_lossy()
@@ -284,9 +297,9 @@ fn test_detect_gex_geometry_multi_lane_binseq() {
         num_threads: 1,
     };
 
-    let whitelist = load_whitelist(&root);
-    let gex = GexMapper::from_file(&gex_path, 1).unwrap();
-    let probe: ProbeMapper<Unpositioned> = ProbeMapper::from_file(&probe_path, false, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let gex = GEX.clone();
+    let probe = PROBE.clone();
     let input = MultiPairedInput {
         inputs: vec![path.clone(), path],
     };
@@ -318,8 +331,6 @@ fn test_detect_gex_geometry_multi_lane_fastx() {
     // [R1, R2, R1, R2] is two lanes -- exercises the `chunks(2)` sampling path.
     let root = workspace_root();
 
-    let gex_path = root.join("data/libraries/gex_probes.tsv");
-    let probe_path = root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
     let r1 = root
         .join("data/sequencing/gex_R1.fastq.gz")
         .to_string_lossy()
@@ -329,9 +340,9 @@ fn test_detect_gex_geometry_multi_lane_fastx() {
         .to_string_lossy()
         .to_string();
 
-    let whitelist = load_whitelist(&root);
-    let gex = GexMapper::from_file(&gex_path, 1).unwrap();
-    let probe: ProbeMapper<Unpositioned> = ProbeMapper::from_file(&probe_path, false, 1).unwrap();
+    let whitelist = WHITELIST.clone();
+    let gex = GEX.clone();
+    let probe = PROBE.clone();
 
     let input = MultiPairedInput {
         inputs: vec![r1.clone(), r2.clone(), r1, r2],

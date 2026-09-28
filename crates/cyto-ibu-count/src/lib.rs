@@ -57,7 +57,8 @@ fn decode_record(
     header: Header,
     barcode_buffer: &mut Vec<u8>,
 ) -> Result<(&str, u64, u64)> {
-    bitnuc::from_2bit(record.barcode(), header.bc_len as usize, barcode_buffer)?;
+    let decoded = bitnuc::from_2bit(record.barcode());
+    barcode_buffer.extend_from_slice(&decoded[..header.bc_len as usize]);
     let barcode_str = std::str::from_utf8(barcode_buffer)?;
     Ok((barcode_str, record.count(), record.index()))
 }
@@ -87,11 +88,8 @@ fn dump_decoded_records_features<W: Write>(
 ) -> Result<()> {
     let mut barcode_buffer = Vec::new(); // Reusable buffer for barcode nucleotides
     for record in records {
-        bitnuc::from_2bit(
-            record.barcode(),
-            header.bc_len as usize,
-            &mut barcode_buffer,
-        )?;
+        let decoded = bitnuc::from_2bit(record.barcode());
+        barcode_buffer.extend_from_slice(&decoded[..header.bc_len as usize]);
 
         // handle suffix
         extend_suffix(&mut barcode_buffer, suffix);
@@ -143,7 +141,7 @@ fn aggregate_unit(
     // Creates a vector to store the aggregated feature names
     let mut agg_features = vec![String::new(); aggr_to_uidx.len()];
     for (feature, idx) in &aggr_to_uidx {
-        agg_features[*idx] = feature.clone();
+        agg_features[*idx].clone_from(feature);
     }
 
     let mut agg_counts = BarcodeIndexCounts::with_capacity(counts.get_num_barcodes());
@@ -270,7 +268,8 @@ fn write_counts_mtx<P: AsRef<Path>>(
         } else {
             // decode the barcode
             dbuf.clear();
-            bitnuc::from_2bit(record.barcode(), header.bc_len as usize, &mut dbuf)?;
+            let decoded = bitnuc::from_2bit(record.barcode());
+            dbuf.extend_from_slice(&decoded[..header.bc_len as usize]);
 
             // handle suffix
             extend_suffix(&mut dbuf, suffix);
@@ -314,7 +313,7 @@ pub fn run(args: &ArgsCount) -> Result<()> {
 
     let reader = Reader::new(input)?;
     let header = reader.header();
-    let mut counts = deduplicate_umis(reader, max_index as u64)?;
+    let mut counts = deduplicate_umis(reader.iter_records()?, max_index as u64)?;
 
     // aggregate the units if features are present
     if let Some(tx_features) = &features {

@@ -31,8 +31,8 @@ pub fn run(args: &ArgsCat) -> Result<()> {
     let mut writer = Writer::new(output, header)?;
 
     // Dump all records into the output
-    for reader in &mut inputs {
-        for record in reader {
+    for reader in inputs {
+        for record in reader.iter_records()? {
             writer.write_record(&record?)?;
         }
     }

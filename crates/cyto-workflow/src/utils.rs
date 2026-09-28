@@ -233,6 +233,7 @@ pub fn assign_guides<P: AsRef<Path>>(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)] // linear pipeline orchestration, splitting further adds indirection without reducing complexity
 pub fn ibu_steps<P: AsRef<Path>>(
     ibu_path: &str,
     outdir: P,
@@ -290,7 +291,7 @@ pub fn ibu_steps<P: AsRef<Path>>(
         debug!("Removing uncorrected file: {sort_path}");
         std::fs::remove_file(&sort_path)?;
 
-        sort_path = umi_path.clone();
+        sort_path.clone_from(&umi_path);
     }
 
     if !wf_args.skip_reads {
@@ -350,70 +351,97 @@ pub fn ibu_steps<P: AsRef<Path>>(
 
     // Convert to h5ad if required
     if wf_args.to_h5ad() {
-        let start = Instant::now();
-        convert_to_h5ad(&count_path)?;
-        let elapsed = start.elapsed();
-        timings.push(ModuleTiming::new(
+        run_h5ad_steps(
+            &outdir,
+            wf_args,
+            wf_mode,
+            geomux_args,
+            threads,
+            &count_path,
             base_ibu_path,
-            Module::ConversionH5ad,
-            elapsed,
-        ));
+            &mut timings,
+        )?;
+    }
 
-        match wf_mode {
-            WorkflowMode::Gex => {
-                if !wf_args.no_filter {
-                    let filter_stats_outdir = outdir.as_ref().join("stats").join("filtering");
-                    std::fs::create_dir_all(&filter_stats_outdir)
-                        .context("Unable to build filter stats output directory")?;
+    Ok(timings)
+}
 
-                    let start = Instant::now();
-                    filter_h5ad(
-                        &count_path,
-                        &filter_stats_outdir,
-                        base_ibu_path,
-                        wf_args.keep_unfiltered,
-                    )?;
-                    let elapsed = start.elapsed();
-                    timings.push(ModuleTiming::new(
-                        base_ibu_path,
-                        Module::DropletFiltering,
-                        elapsed,
-                    ));
-                }
+/// Converts the counts to h5ad, then runs the mode-specific post-conversion step
+/// (`EmptyDrops` filtering for GEX, guide assignment for CRISPR).
+#[allow(clippy::too_many_arguments)] // mirrors the pipeline state threaded through ibu_steps
+fn run_h5ad_steps<P: AsRef<Path>>(
+    outdir: P,
+    wf_args: &ArgsWorkflow,
+    wf_mode: WorkflowMode,
+    geomux_args: Option<ArgsGeomux>,
+    threads: usize,
+    count_path: &Path,
+    base_ibu_path: &str,
+    timings: &mut Vec<ModuleTiming>,
+) -> Result<()> {
+    let start = Instant::now();
+    convert_to_h5ad(count_path)?;
+    let elapsed = start.elapsed();
+    timings.push(ModuleTiming::new(
+        base_ibu_path,
+        Module::ConversionH5ad,
+        elapsed,
+    ));
+
+    match wf_mode {
+        WorkflowMode::Gex => {
+            if !wf_args.no_filter {
+                let filter_stats_outdir = outdir.as_ref().join("stats").join("filtering");
+                std::fs::create_dir_all(&filter_stats_outdir)
+                    .context("Unable to build filter stats output directory")?;
+
+                let start = Instant::now();
+                filter_h5ad(
+                    count_path,
+                    &filter_stats_outdir,
+                    base_ibu_path,
+                    wf_args.keep_unfiltered,
+                )?;
+                let elapsed = start.elapsed();
+                timings.push(ModuleTiming::new(
+                    base_ibu_path,
+                    Module::DropletFiltering,
+                    elapsed,
+                ));
             }
-            WorkflowMode::Crispr => {
-                if !wf_args.skip_assignment {
-                    let assignment_outdir = outdir.as_ref().join("assignments");
-                    let assignment_stats_outdir = outdir.as_ref().join("stats").join("assignments");
-                    std::fs::create_dir_all(&assignment_outdir)
-                        .context("Unable to build assignments output directory")?;
-                    std::fs::create_dir_all(&assignment_stats_outdir)
-                        .context("Unable to build assignments stats output directory")?;
-                    let Some(geomux_args) = geomux_args else {
-                        bail!("Expected geomux arguments")
-                    };
+        }
+        WorkflowMode::Crispr => {
+            if !wf_args.skip_assignment {
+                let assignment_outdir = outdir.as_ref().join("assignments");
+                let assignment_stats_outdir = outdir.as_ref().join("stats").join("assignments");
+                std::fs::create_dir_all(&assignment_outdir)
+                    .context("Unable to build assignments output directory")?;
+                std::fs::create_dir_all(&assignment_stats_outdir)
+                    .context("Unable to build assignments stats output directory")?;
+                let Some(geomux_args) = geomux_args else {
+                    bail!("Expected geomux arguments")
+                };
 
-                    let start = Instant::now();
-                    assign_guides(
-                        &count_path,
-                        &assignment_outdir,
-                        &assignment_stats_outdir,
-                        base_ibu_path,
-                        geomux_args,
-                        threads,
-                    )?;
-                    let elapsed = start.elapsed();
-                    timings.push(ModuleTiming::new(
-                        base_ibu_path,
-                        Module::GuideAssignment,
-                        elapsed,
-                    ));
-                }
+                let start = Instant::now();
+                assign_guides(
+                    count_path,
+                    &assignment_outdir,
+                    &assignment_stats_outdir,
+                    base_ibu_path,
+                    geomux_args,
+                    threads,
+                )?;
+                let elapsed = start.elapsed();
+                timings.push(ModuleTiming::new(
+                    base_ibu_path,
+                    Module::GuideAssignment,
+                    elapsed,
+                ));
             }
         }
     }
 
-    Ok(timings)
+    Ok(())
 }
 
 pub fn write_done_file<P: AsRef<Path>>(outdir: P, args: &RefWorkflowCommand) -> Result<()> {
