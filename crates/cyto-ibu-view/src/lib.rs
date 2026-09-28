@@ -1,7 +1,7 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use anyhow::Result;
-use ibu::{Header, Reader, Record};
+use ibu::{Header, IbuError, Reader, Record};
 
 use cyto_cli::ibu::ArgsView;
 use cyto_io::{match_input, match_output};
@@ -23,12 +23,12 @@ fn write_header<W: Write>(header: Header, writer: &mut W) -> Result<()> {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn dump_encoded_records<W: Write, R: Read>(
+fn dump_encoded_records<W: Write>(
     csv_writer: &mut csv::Writer<W>,
-    reader: Reader<R>,
+    records: impl Iterator<Item = Result<Record, IbuError>>,
     features: Option<&[String]>,
 ) -> Result<()> {
-    for record in reader {
+    for record in records {
         let record = record?;
         if let Some(features) = features {
             let f_record: (u64, u64, &str) =
@@ -48,25 +48,27 @@ fn decode_record<'a, 'b>(
     barcode_buffer: &'a mut Vec<u8>,
     umi_buffer: &'b mut Vec<u8>,
 ) -> Result<(&'a str, &'b str, u64)> {
-    bitnuc::from_2bit(record.barcode, header.bc_len as usize, barcode_buffer)?;
+    let decoded_barcode = bitnuc::from_2bit(record.barcode);
+    barcode_buffer.extend_from_slice(&decoded_barcode[..header.bc_len as usize]);
     let barcode_str = std::str::from_utf8(barcode_buffer)?;
 
-    bitnuc::from_2bit(record.umi, header.umi_len as usize, umi_buffer)?;
+    let decoded_umi = bitnuc::from_2bit(record.umi);
+    umi_buffer.extend_from_slice(&decoded_umi[..header.umi_len as usize]);
     let umi_str = std::str::from_utf8(umi_buffer)?;
 
     Ok((barcode_str, umi_str, record.index))
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn dump_decoded_records<W: Write, R: Read>(
+fn dump_decoded_records<W: Write>(
     csv_writer: &mut csv::Writer<W>,
-    reader: Reader<R>,
+    records: impl Iterator<Item = Result<Record, IbuError>>,
     header: Header,
     features: Option<&[String]>,
 ) -> Result<()> {
     let mut barcode_buffer = Vec::new(); // Reusable buffer for barcode nucleotides
     let mut umi_buffer = Vec::new(); // Reusable buffer for UMI nucleotides
-    for record in reader {
+    for record in records {
         let record = record?;
         let decoded = decode_record(record, header, &mut barcode_buffer, &mut umi_buffer)?;
         if let Some(features) = features {
@@ -128,8 +130,13 @@ pub fn run(args: &ArgsView) -> Result<()> {
 
     // Write the records to the output file
     if args.options.decode {
-        dump_decoded_records(&mut csv_writer, reader, header, features.as_deref())
+        dump_decoded_records(
+            &mut csv_writer,
+            reader.iter_records()?,
+            header,
+            features.as_deref(),
+        )
     } else {
-        dump_encoded_records(&mut csv_writer, reader, features.as_deref())
+        dump_encoded_records(&mut csv_writer, reader.iter_records()?, features.as_deref())
     }
 }

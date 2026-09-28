@@ -9,7 +9,7 @@ Orchestrates end-to-end analysis pipelines. Runs the full sequence: map -> sort 
 - `src/gex.rs` — `run()`: GEX workflow entry point. Calls `cyto_map::run_gex()`, then parallelizes `ibu_steps()` across all per-probe IBU files. Distributes threads proportionally across files.
 - `src/crispr.rs` — `run()`: CRISPR workflow entry point. Same structure as GEX but passes `ArgsGeomux` for guide assignment step.
 - `src/utils.rs` — Core workflow utilities:
-  - `ibu_steps()` — Orchestrates per-IBU pipeline: sort -> umi-correct (optional) -> reads stats (optional) -> count -> h5ad conversion (optional) -> filter/assign. Cleans up intermediate files.
+  - `ibu_steps()` — Orchestrates per-IBU pipeline: sort -> umi-correct (optional) -> reads stats (optional) -> count -> h5ad conversion (optional) -> filter/assign. Cleans up intermediate files. Delegates the h5ad conversion + mode-specific filter/assign step to `run_h5ad_steps()`.
   - `identify_ibu_files()` — Globs `outdir/ibu/*.ibu`, excludes `.sort.ibu`
   - `convert_to_h5ad()` — Runs `pycyto convert` via `uvx_command`, removes MTX directory on success
   - `filter_h5ad()` — Runs `cell-filter` (EmptyDrops) via `uvx_command`, handles missing filtered output gracefully

@@ -180,6 +180,7 @@ mod testing {
     }
 
     #[test]
+    #[allow(clippy::many_single_char_names)]
     fn test_multiple_components_various_sizes() {
         let mut graph: Graph<(), (), Undirected> = Graph::new_undirected();
 
@@ -330,6 +331,7 @@ mod testing {
     }
 
     #[test]
+    #[allow(clippy::many_single_char_names)]
     fn test_bridge_connects_components() {
         let mut graph: Graph<(), (), Undirected> = Graph::new_undirected();
 
