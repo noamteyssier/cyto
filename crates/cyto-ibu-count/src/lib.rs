@@ -141,7 +141,7 @@ fn aggregate_unit(
     // Creates a vector to store the aggregated feature names
     let mut agg_features = vec![String::new(); aggr_to_uidx.len()];
     for (feature, idx) in &aggr_to_uidx {
-        agg_features[*idx] = feature.clone();
+        agg_features[*idx].clone_from(feature);
     }
 
     let mut agg_counts = BarcodeIndexCounts::with_capacity(counts.get_num_barcodes());
