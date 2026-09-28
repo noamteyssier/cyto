@@ -1908,7 +1908,7 @@ mod tests {
     fn test_build_read_regions_empty_mate() {
         let placements = vec![(Component::Gex, ReadMate::R2, 0, Some(50))];
         let r1 = build_read_regions(&placements, ReadMate::R1);
-        assert!(r1.regions.is_empty());
+        assert_eq!(r1.regions, []);
     }
 
     #[test]

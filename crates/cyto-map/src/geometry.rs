@@ -224,7 +224,7 @@ fn parse_read(input: &str, read_name: &'static str) -> Result<Read, ParseError> 
                 let region = parse_region(&content, start)?;
                 regions.push(region);
             }
-            ' ' | '\t' => continue,
+            ' ' | '\t' => {}
             _ => {
                 return Err(ParseError::UnexpectedChar {
                     char: ch,
@@ -373,8 +373,8 @@ impl Geometry {
     {
         let mut components = HashMap::new();
 
-        let (r1_components, r1_length) = resolve_read(&self.r1, &length_fn, ReadMate::R1)?;
-        let (r2_components, r2_length) = resolve_read(&self.r2, &length_fn, ReadMate::R2)?;
+        let (r1_components, r1_length) = resolve_read(&self.r1, &length_fn, ReadMate::R1);
+        let (r2_components, r2_length) = resolve_read(&self.r2, &length_fn, ReadMate::R2);
 
         components.extend(r1_components);
         components.extend(r2_components);
@@ -391,7 +391,7 @@ fn resolve_read<F>(
     read: &Read,
     length_fn: &F,
     mate: ReadMate,
-) -> Result<(HashMap<Component, ResolvedRegion>, Option<usize>), ResolveError>
+) -> (HashMap<Component, ResolvedRegion>, Option<usize>)
 where
     F: Fn(Component) -> Option<usize>,
 {
@@ -464,7 +464,7 @@ where
         }
     }
 
-    Ok((result, total_length))
+    (result, total_length)
 }
 
 #[cfg(test)]
@@ -655,9 +655,8 @@ mod tests {
     fn test_lengths(component: Component) -> Option<usize> {
         match component {
             Component::Barcode => Some(16),
-            Component::Umi => None,
+            Component::Umi | Component::Anchor => None,
             Component::Probe => Some(8),
-            Component::Anchor => None,
             Component::Protospacer => Some(20),
             Component::Gex => Some(25),
         }
