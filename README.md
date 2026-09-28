@@ -248,6 +248,7 @@ Available presets:
 |--------|----------|
 | `gex-v1` | `[barcode][umi:12] \| [gex][:18][probe]` |
 | `gex-v2` | `[barcode][umi:12][:10][probe] \| [gex]` |
+| `gex-v2-r2` | `[barcode][umi:12] \| [gex][:29][probe]` |
 | `crispr-v1` | `[barcode][umi:12] \| [probe][anchor][protospacer]` |
 | `crispr-v2` | `[barcode][umi:12][:10][probe] \| [:14][anchor][protospacer]` |
 
