@@ -8,7 +8,7 @@ use cyto_cli::{
     map::MultiPairedInput,
     map::{
         GEOMETRY_CRISPR_FLEX_V1, GEOMETRY_CRISPR_FLEX_V2, GEOMETRY_GEX_FLEX_V1,
-        GEOMETRY_GEX_FLEX_V2,
+        GEOMETRY_GEX_FLEX_V2, GEOMETRY_GEX_FLEX_V2_R2,
     },
 };
 use cyto_io::{FeatureWriter, write_features};
@@ -93,13 +93,14 @@ pub fn run_detect_crispr(args: &ArgsDetectCrispr) -> Result<()> {
 
 /// Map a detected geometry string to its preset name, if any.
 ///
-/// Only the four canonical Flex presets are considered. `GEOMETRY_CRISPR_PROPERSEQ`
+/// Only the five canonical Flex presets are considered. `GEOMETRY_CRISPR_PROPERSEQ`
 /// is intentionally excluded because there is no user-facing `properseq` preset on
 /// the detect command.
 fn preset_name_for_geometry(geometry_string: &str) -> Option<&'static str> {
     match geometry_string {
         s if s == GEOMETRY_GEX_FLEX_V1 => Some("gex-v1"),
         s if s == GEOMETRY_GEX_FLEX_V2 => Some("gex-v2"),
+        s if s == GEOMETRY_GEX_FLEX_V2_R2 => Some("gex-v2-r2"),
         s if s == GEOMETRY_CRISPR_FLEX_V1 => Some("crispr-v1"),
         s if s == GEOMETRY_CRISPR_FLEX_V2 => Some("crispr-v2"),
         _ => None,
@@ -343,6 +344,14 @@ mod tests {
         assert_eq!(
             preset_name_for_geometry(GEOMETRY_GEX_FLEX_V2),
             Some("gex-v2")
+        );
+    }
+
+    #[test]
+    fn test_preset_name_for_geometry_gex_v2_r2() {
+        assert_eq!(
+            preset_name_for_geometry(GEOMETRY_GEX_FLEX_V2_R2),
+            Some("gex-v2-r2")
         );
     }
 
