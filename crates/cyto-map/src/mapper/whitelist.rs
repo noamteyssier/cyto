@@ -17,6 +17,7 @@ struct Whitelist {
     seq: String,
 }
 
+#[derive(Clone)]
 pub struct WhitelistMapper<S = Ready> {
     hash: SeqHash,
     pos: usize,
