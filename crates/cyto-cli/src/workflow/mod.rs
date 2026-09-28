@@ -83,6 +83,7 @@ impl WorkflowMode {
 
 #[derive(Parser, Debug)]
 #[clap(next_help_heading = "Workflow Options")]
+#[allow(clippy::struct_excessive_bools)] // each field is an independent CLI flag
 pub struct ArgsWorkflow {
     /// Skip UMI correction step
     #[clap(long)]
