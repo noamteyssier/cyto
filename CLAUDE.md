@@ -122,7 +122,7 @@ cyto
 
 Read geometry is specified via a domain-specific language:
 
-- Presets: `gex-v1`, `gex-v2`, `crispr-v1`, `crispr-v2`
+- Presets: `gex-v1`, `gex-v2`, `gex-v2-r2`, `crispr-v1`, `crispr-v2`
 - Components: `[barcode]`, `[umi:N]`, `[probe]`, `[gex]`, `[anchor]`, `[protospacer]`
 - Skip regions: `[:N]` for anonymous spacers
 - Custom via `--geometry` flag
