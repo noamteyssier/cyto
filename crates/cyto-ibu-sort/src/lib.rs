@@ -16,7 +16,7 @@ const RECORD_SIZE: u64 = 24;
 const DEFAULT_MEMORY_LIMIT: u64 = 5;
 
 fn pull_records<R: std::io::Read>(reader: Reader<R>) -> Result<Vec<ibu::Record>, ibu::IbuError> {
-    reader.collect()
+    reader.iter_records()?.collect()
 }
 
 pub fn run(args: &ArgsSort) -> Result<()> {
@@ -70,7 +70,7 @@ pub fn run(args: &ArgsSort) -> Result<()> {
             .context("Failed to build external sorter")?;
 
         // Sort the records using external sort
-        let sorted = sorter.sort(reader).with_context(|| {
+        let sorted = sorter.sort(reader.iter_records()?).with_context(|| {
             error!(
                 "Failed to sort with external sort for file: {}",
                 args.input.input.as_deref().unwrap_or("stdin")

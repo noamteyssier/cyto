@@ -314,7 +314,7 @@ pub fn run(args: &ArgsCount) -> Result<()> {
 
     let reader = Reader::new(input)?;
     let header = reader.header();
-    let mut counts = deduplicate_umis(reader, max_index as u64)?;
+    let mut counts = deduplicate_umis(reader.iter_records()?, max_index as u64)?;
 
     // aggregate the units if features are present
     if let Some(tx_features) = &features {

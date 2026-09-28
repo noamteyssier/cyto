@@ -225,7 +225,7 @@ where
     R: Read + Send + 'static,
     W: Write + Send + 'static,
 {
-    let preader = BarcodeSetReader::new_shared(reader.into_iter());
+    let preader = BarcodeSetReader::new_shared(reader.iter_records()?);
     let ticket_counter = Arc::new(AtomicUsize::new(0));
 
     let (tx, rx): (Sender<(usize, Vec<Record>)>, Receiver<(usize, Vec<Record>)>) = unbounded();
