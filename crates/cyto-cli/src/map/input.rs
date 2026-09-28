@@ -20,9 +20,13 @@ pub struct MultiPairedInput {
 }
 impl MultiPairedInput {
     pub fn is_binseq(&self) -> bool {
-        self.inputs
-            .iter()
-            .all(|path| path.ends_with(".bq") || path.ends_with(".vbq") || path.ends_with("cbq"))
+        self.inputs.iter().all(|path| {
+            std::path::Path::new(path).extension().is_some_and(|ext| {
+                ext.eq_ignore_ascii_case("bq")
+                    || ext.eq_ignore_ascii_case("vbq")
+                    || ext.eq_ignore_ascii_case("cbq")
+            })
+        })
     }
 
     pub fn to_binseq_readers(&self) -> Result<Vec<BinseqReader>> {

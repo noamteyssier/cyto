@@ -19,6 +19,7 @@ struct ProbeRecord {
     _nuc: String,
     alias: String,
 }
+#[derive(Clone)]
 pub struct ProbeMapper<S = Ready> {
     hash: SeqHash,
     aliases: Vec<String>,
@@ -39,7 +40,7 @@ impl ProbeMapper<Unpositioned> {
     /// Load probe sequences and aliases from a file, then build a `SeqHash`.
     pub fn from_file<P: AsRef<Path>>(path: P, exact: bool, window: usize) -> Result<Self> {
         let (sequences, aliases) = Self::load_from_file(path)?;
-        Self::build(sequences, aliases, exact, window)
+        Self::build(&sequences, aliases, exact, window)
     }
 
     /// Load probe sequences and aliases from a file, filter aliases that match a regex, then build a `SeqHash`.
@@ -64,7 +65,7 @@ impl ProbeMapper<Unpositioned> {
             (sequences.len() as f64 / num_og_sequences as f64) * 100.0,
             alias_regex,
         );
-        Self::build(sequences, aliases, exact, window)
+        Self::build(&sequences, aliases, exact, window)
     }
 
     /// Load probe sequences and aliases from a file.
@@ -87,7 +88,7 @@ impl ProbeMapper<Unpositioned> {
     }
 
     fn build(
-        sequences: Vec<String>,
+        sequences: &[String],
         aliases: Vec<String>,
         exact: bool,
         window: usize,
@@ -95,9 +96,9 @@ impl ProbeMapper<Unpositioned> {
         trace!("[PROBE seqhash] - Starting build");
         let start = Instant::now();
         let hash = if exact {
-            SeqHashBuilder::default().exact().build(&sequences)
+            SeqHashBuilder::default().exact().build(sequences)
         } else {
-            SeqHash::new(&sequences)
+            SeqHash::new(sequences)
         }?;
         let init_time = start.elapsed().as_secs_f64();
         info!(

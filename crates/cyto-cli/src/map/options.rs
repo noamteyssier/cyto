@@ -101,7 +101,7 @@ pub enum GeometryPreset {
     CrisprProper,
 }
 impl GeometryPreset {
-    pub fn into_geometry_str(&self) -> &str {
+    pub fn geometry_str(&self) -> &str {
         match self {
             Self::GexV1 => GEOMETRY_GEX_FLEX_V1,
             Self::GexV2 => GEOMETRY_GEX_FLEX_V2,
