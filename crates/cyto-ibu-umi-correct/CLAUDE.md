@@ -7,7 +7,7 @@ Corrects UMI sequencing errors using graph-based connected components. Groups re
 ## Key Source Files
 
 - `src/lib.rs` — Core correction logic:
-  - `collapse_index_set()` — Builds undirected graph of UMIs within HD<=1 (using `bitnuc::twobit::hdist_scalar`), finds connected components via `petgraph`, selects first UMI as representative, updates records in-place
+  - `collapse_index_set()` — Builds undirected graph of UMIs within HD<=1 (using `bitnuc::hdist_scalar`), finds connected components via `petgraph`, selects first UMI as representative, updates records in-place
   - `collapse_barcode_set()` — Groups records by barcode-index pair, calls `collapse_index_set()` on each group
   - `process_records_parallel()` — Multi-threaded processing: worker threads pull barcode sets from shared reader, process them, and send corrected records to a writer thread via ticket-based ordering (ensures deterministic output)
   - `run()` — Entry point
