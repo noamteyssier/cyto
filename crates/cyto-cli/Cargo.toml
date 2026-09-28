@@ -1,11 +1,11 @@
 [package]
 name = "cyto-cli"
-version = "0.7.4"
+version = "0.7.5"
 edition = "2021"
 license = "BSD-3-Clause"
-authors = ["Noam Teyssier <noam.teyssier@arcinstitute.org>"]
+authors = ["Noam Teyssier"]
 description = "Ultra high-throughput processing of 10x-flex single-cell sequencing data"
-repository = "https://github.com/arcinstitute/cyto"
+repository = "https://github.com/noamteyssier/cyto"
 categories = ["command-line-utilities", "science::bioinformatics"]
 keywords = ["flex", "binseq", "single-cell", "probe", "sequencing"]
 
@@ -14,7 +14,6 @@ anyhow = { workspace = true }
 binseq = { workspace = true }
 clap = { workspace = true }
 cyto-io = { workspace = true }
-ibu = { workspace = true }
 log = { workspace = true }
 paraseq = { workspace = true }
 

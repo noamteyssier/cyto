@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::map::{GEOMETRY_CRISPR_FLEX_V2, GEOMETRY_GEX_FLEX_V2};
+use crate::map::{GEOMETRY_CRISPR_FLEX_V2, GEOMETRY_GEX_FLEX_V2, GEOMETRY_GEX_FLEX_V2_R2};
 
 use super::{GEOMETRY_CRISPR_FLEX_V1, GEOMETRY_CRISPR_PROPERSEQ, GEOMETRY_GEX_FLEX_V1};
 
@@ -44,7 +44,7 @@ pub struct MapOptions {
 impl MapOptions {
     pub fn remap_window(&self) -> usize {
         match self.preset {
-            Some(GeometryPreset::GexV2 | GeometryPreset::CrisprV2) => 5,
+            Some(GeometryPreset::GexV2 | GeometryPreset::GexV2R2 | GeometryPreset::CrisprV2) => 5,
             _ => self.remap_window,
         }
     }
@@ -90,6 +90,9 @@ pub enum GeometryPreset {
     GexV1,
     /// [barcode][umi:12][:10][probe]|[gex]
     GexV2,
+    /// [barcode][umi:12]|[gex][:29][probe]  (Flex V2 with probe barcode on R2)
+    #[value(name = "gex-v2-r2")]
+    GexV2R2,
     /// [barcode][umi:12]|[probe][anchor][protospacer]
     CrisprV1,
     /// [barcode][umi:12][:10][probe]|[:14][anchor][protospacer]
@@ -102,6 +105,7 @@ impl GeometryPreset {
         match self {
             Self::GexV1 => GEOMETRY_GEX_FLEX_V1,
             Self::GexV2 => GEOMETRY_GEX_FLEX_V2,
+            Self::GexV2R2 => GEOMETRY_GEX_FLEX_V2_R2,
             Self::CrisprV1 => GEOMETRY_CRISPR_FLEX_V1,
             Self::CrisprV2 => GEOMETRY_CRISPR_FLEX_V2,
             Self::CrisprProper => GEOMETRY_CRISPR_PROPERSEQ,
