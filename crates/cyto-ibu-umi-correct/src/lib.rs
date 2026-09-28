@@ -23,6 +23,8 @@ mod utils;
 
 pub use crate::{parallel::BarcodeSetReader, utils::connected_components_vec};
 
+type TicketedRecords = (usize, Vec<Record>);
+
 #[derive(Serialize, Clone, Copy)]
 struct Statistics {
     total: usize,
@@ -228,7 +230,7 @@ where
     let preader = BarcodeSetReader::new_shared(reader.iter_records()?);
     let ticket_counter = Arc::new(AtomicUsize::new(0));
 
-    let (tx, rx): (Sender<(usize, Vec<Record>)>, Receiver<(usize, Vec<Record>)>) = unbounded();
+    let (tx, rx): (Sender<TicketedRecords>, Receiver<TicketedRecords>) = unbounded();
 
     // Spawn writer thread
     let writer_handle = std::thread::spawn(move || -> Result<()> {
