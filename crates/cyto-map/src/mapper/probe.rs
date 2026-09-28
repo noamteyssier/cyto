@@ -19,6 +19,7 @@ struct ProbeRecord {
     _nuc: String,
     alias: String,
 }
+#[derive(Clone)]
 pub struct ProbeMapper<S = Ready> {
     hash: SeqHash,
     aliases: Vec<String>,

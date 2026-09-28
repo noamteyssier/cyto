@@ -52,5 +52,7 @@ impl<T: Library + ?Sized> Library for Box<T> {
 }
 
 // Typestate markers
+#[derive(Clone, Copy)]
 pub struct Unpositioned;
+#[derive(Clone, Copy)]
 pub struct Ready;
