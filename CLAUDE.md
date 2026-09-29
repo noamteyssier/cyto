@@ -77,6 +77,17 @@ cargo fmt
 
 Workspace uses pedantic clippy lints with specific exceptions defined in root Cargo.toml.
 
+### Pre-commit Hooks
+
+[`prek`](https://github.com/j178/prek) runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --all-features -- -D warnings` on every commit (config in `.pre-commit-config.yaml`).
+
+```bash
+just hooks  # cargo install --locked prek && prek install (once per clone)
+just lint   # prek run --all-files
+```
+
+Fix hook failures rather than bypassing with `--no-verify`.
+
 ## Architecture
 
 ### Crate Organization (11 crates in `crates/`)

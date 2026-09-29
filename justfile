@@ -25,6 +25,15 @@ install:
 install-portable:
     cargo install --path crates/cyto
 
+# Install prek and register the git pre-commit hooks
+hooks:
+    cargo install --locked prek
+    prek install
+
+# Run all pre-commit hooks on every file
+lint:
+    prek run --all-files
+
 run-wf-crispr:
     time cyto workflow crispr \
         -c {{ CRISPR_GUIDES }} \
