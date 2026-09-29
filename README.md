@@ -486,6 +486,19 @@ Guide assignments are included in the count matrix output.
 - Variable read architectures
 - Full-length transcript sequencing
 
+## Development
+
+Commits are checked with [`prek`](https://github.com/j178/prek), which runs `cargo fmt --check` and `cargo clippy --all-targets --all-features -- -D warnings`.
+`prek` **must be installed** and registered in your clone before committing:
+
+```bash
+# installs prek (cargo install --locked prek) and registers the git hook
+just hooks
+
+# run all hooks manually
+just lint
+```
+
 ## Software Availability
 
 All components are available under the MIT license:
