@@ -2,16 +2,17 @@
 
 ## Purpose
 
-Orchestrates end-to-end analysis pipelines. Runs the full sequence: map -> sort -> umi-correct -> reads -> count -> convert -> filter/assign. Parallelizes post-mapping steps across probes using Rayon. Invokes external Python tools (`pycyto`, `cell-filter`, `geomux`) via `uvx` at pinned versions, using the `cyto_cli::workflow::uvx_command` helper (which builds a `std::process::Command`). This runs each tool in an ephemeral, isolated environment.
+Orchestrates end-to-end analysis pipelines. Runs the full sequence: map -> sort -> umi-correct -> reads -> count -> convert -> filter/assign, then a run-level QC report. Parallelizes post-mapping steps across probes using Rayon. Invokes external Python tools (`pycyto`, `cell-filter`, `geomux`) via `uvx` at pinned versions, using the `cyto_cli::workflow::uvx_command` / `uvx_command_from` helpers (which build a `std::process::Command`). This runs each tool in an ephemeral, isolated environment.
 
 ## Key Source Files
 
-- `src/gex.rs` — `run()`: GEX workflow entry point. Calls `cyto_map::run_gex()`, then parallelizes `ibu_steps()` across all per-probe IBU files. Distributes threads proportionally across files.
+- `src/gex.rs` — `run()`: GEX workflow entry point. Calls `cyto_map::run_gex()`, then parallelizes `ibu_steps()` across all per-probe IBU files. Distributes threads proportionally across files. Ends with `write_done_file`, `write_timings_file`, `qc_report`.
 - `src/crispr.rs` — `run()`: CRISPR workflow entry point. Same structure as GEX but passes `ArgsGeomux` for guide assignment step.
 - `src/utils.rs` — Core workflow utilities:
   - `ibu_steps()` — Orchestrates per-IBU pipeline: sort -> umi-correct (optional) -> reads stats (optional) -> count -> h5ad conversion (optional) -> filter/assign. Cleans up intermediate files. Delegates the h5ad conversion + mode-specific filter/assign step to `run_h5ad_steps()`.
   - `identify_ibu_files()` — Globs `outdir/ibu/*.ibu`, excludes `.sort.ibu`
-  - `convert_to_h5ad()` — Runs `pycyto convert` via `uvx_command`, removes MTX directory on success
+  - `convert_to_h5ad()` — Runs `pycyto convert` via `uvx_command_from(PYCYTO_SPEC, ..)`, removes MTX directory on success
+  - `qc_report()` — Runs `pycyto qc <outdir>` after `.timings.tsv` is written (h5ad format, unless `--no-qc`); writes `qc_report.html` and metric CSVs into the run directory. Failure is logged, not fatal: all data outputs already exist
   - `filter_h5ad()` — Runs `cell-filter` (EmptyDrops) via `uvx_command`, handles missing filtered output gracefully
   - `assign_guides()` — Runs `geomux` via `uvx_command` with full parameter passthrough, handles known warning conditions
   - `write_done_file()` / `write_timings_file()` — Writes workflow completion marker and timing TSV
