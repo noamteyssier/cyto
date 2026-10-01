@@ -8,7 +8,9 @@ use crate::{ArgsCrispr, ArgsGex};
 
 pub const VERSION_GEOMUX: &str = "0.5.5";
 pub const VERSION_CELL_FILTER: &str = "0.1.2";
-pub const VERSION_PYCYTO: &str = "0.1.14";
+/// `uvx --from` source for pycyto (`convert` and `qc`). Temporarily the git branch
+/// that adds `pycyto qc`; switch back to a published pin (`pycyto==0.2.0`) once released.
+pub const PYCYTO_SPEC: &str = "git+https://github.com/noamteyssier/pycyto@dev-0.2.0";
 
 #[derive(Subcommand, Debug)]
 pub enum WorkflowCommand {
@@ -115,6 +117,12 @@ pub struct ArgsWorkflow {
     #[clap(long)]
     pub skip_assignment: bool,
 
+    /// Skip the QC report (`pycyto qc`) written at the end of the run
+    ///
+    /// Only used when format is h5ad
+    #[clap(long)]
+    pub no_qc: bool,
+
     /// Sort in memory instead of using disk
     #[clap(long)]
     pub sort_in_memory: bool,
@@ -144,7 +152,7 @@ impl ArgsWorkflow {
                 bail!("Encountered an unexpected error checking for `uvx`: {e}");
             }
         }
-        warm_uvx("pycyto", VERSION_PYCYTO)?;
+        warm_uvx_from(PYCYTO_SPEC, "pycyto")?;
         if mode == WorkflowMode::Gex && !self.no_filter {
             warm_uvx("cell-filter", VERSION_CELL_FILTER)?;
         }
@@ -185,10 +193,14 @@ pub enum CountFormat {
 /// tool in an ephemeral, isolated environment. The caller appends the tool's own
 /// subcommand and arguments. Never mutates the user's global `uv tool` set.
 pub fn uvx_command(name: &str, version: &str) -> Command {
+    uvx_command_from(&format!("{name}=={version}"), name)
+}
+
+/// Build a `uvx --from '{spec}' {name}` command for any `uvx` source spec
+/// (a `name==version` pin, a `git+https://...@ref` URL, a local path).
+pub fn uvx_command_from(spec: &str, name: &str) -> Command {
     let mut cmd = Command::new("uvx");
-    cmd.arg("--from")
-        .arg(format!("{name}=={version}"))
-        .arg(name);
+    cmd.arg("--from").arg(spec).arg(name);
     cmd
 }
 
@@ -196,8 +208,13 @@ pub fn uvx_command(name: &str, version: &str) -> Command {
 /// first real invocation (inside the parallel per-probe section) does not pay a
 /// cold resolve, and so a resolution failure surfaces up front.
 fn warm_uvx(name: &str, version: &str) -> Result<()> {
-    debug!("Resolving `{name}=={version}` via uvx if necessary...");
-    match uvx_command(name, version).arg("--help").output() {
+    warm_uvx_from(&format!("{name}=={version}"), name)
+}
+
+/// [`warm_uvx`] for any `uvx` source spec; see [`uvx_command_from`].
+fn warm_uvx_from(spec: &str, name: &str) -> Result<()> {
+    debug!("Resolving `{spec}` via uvx if necessary...");
+    match uvx_command_from(spec, name).arg("--help").output() {
         Ok(output) if output.status.success() => {
             debug!("Resolved `{name}`");
             Ok(())

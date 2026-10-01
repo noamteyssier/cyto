@@ -16,7 +16,7 @@ Defines all CLI argument structures using Clap. This crate is a pure definition 
 - `src/output.rs` — `ArgsOutput` (output directory, force overwrite, `min_ibu_records` threshold)
 - `src/ibu/mod.rs` — `IbuCommand` enum with subcommands (View, Cat, Sort, Count, Umi, Reads) and their `Args*` structs in submodules
 - `src/detect/mod.rs` — `DetectCommand` enum (Gex, Crispr), `ArgsDetectGex`, `ArgsDetectCrispr`, `DetectionOptions` (fields: `num_threads`, `num_reads`, `min_proportion`, `remap_min_proportion`; `num_threads()` accessor resolves `0 → num_cpus::get()` mirroring `RuntimeOptions`). Flattens `WhitelistOptions`, `ProbeOptions`, `GexOptions`/`CrisprOptions` from `map/` -- no `MapOptions`, `ArgsOutput`, or `RuntimeOptions`.
-- `src/workflow/mod.rs` — `WorkflowCommand`, `ArgsWorkflow` (skip flags, format selection, sort options), `ArgsGeomux` (CRISPR guide assignment params), external tool version constants, and `uvx` invocation logic (`uvx_command` helper)
+- `src/workflow/mod.rs` — `WorkflowCommand`, `ArgsWorkflow` (skip flags incl. `no_qc`, format selection, sort options), `ArgsGeomux` (CRISPR guide assignment params), external tool version constants, and `uvx` invocation logic (`uvx_command` for `name==version` pins, `uvx_command_from` for any `--from` spec)
 
 ## Key Types
 
@@ -32,7 +32,7 @@ Defines all CLI argument structures using Clap. This crate is a pure definition 
 - Geometry presets: V2 presets force `remap_window=5`, V1 uses default of 1
 - `MultiPairedInput.is_binseq()` auto-detects format by file extension
 - `ArgsWorkflow.validate_requirements()` checks `uvx` is on `$PATH` and pre-resolves each pinned tool's ephemeral `uvx` environment once, up front. It resolves only the tools the run will use — nothing in mtx/tsv modes — mirroring the convert/filter/assign guards in `cyto-workflow`. The tools themselves are invoked later from `cyto-workflow`.
-- External tool versions are pinned as constants: `VERSION_GEOMUX`, `VERSION_CELL_FILTER`, `VERSION_PYCYTO`
+- External tool versions are pinned as constants: `VERSION_GEOMUX`, `VERSION_CELL_FILTER`, and `PYCYTO_SPEC` (a full `uvx --from` spec, currently the `dev-0.2.0` git branch so `pycyto qc` is available; return it to a PyPI pin once 0.2.0 is released)
 
 ## Dependencies (within workspace)
 

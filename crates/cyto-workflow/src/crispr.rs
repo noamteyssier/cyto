@@ -13,8 +13,8 @@ use cyto_cli::workflow::CrisprMappingCommand;
 use crate::{
     timing::{Module, ModuleTiming},
     utils::{
-        RefWorkflowCommand, ibu_steps, identify_ibu_files, remove_ibu_dir, write_done_file,
-        write_timings_file,
+        RefWorkflowCommand, ibu_steps, identify_ibu_files, qc_report, remove_ibu_dir,
+        write_done_file, write_timings_file,
     },
 };
 
@@ -75,6 +75,10 @@ pub fn run(args: &CrisprMappingCommand) -> Result<()> {
         &RefWorkflowCommand::CrisprMapping(args),
     )?;
     write_timings_file(&args.crispr_args.output.outdir, &all_timings.lock())?;
+
+    if args.wf_args.to_h5ad() && !args.wf_args.no_qc {
+        qc_report(&args.crispr_args.output.outdir)?;
+    }
 
     Ok(())
 }

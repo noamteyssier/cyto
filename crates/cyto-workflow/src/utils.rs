@@ -7,8 +7,8 @@ use anyhow::bail;
 use anyhow::{Context, Result};
 use cyto_cli::ibu::ArgsReads;
 use cyto_cli::workflow::{
-    ArgsGeomux, CrisprMappingCommand, GexMappingCommand, VERSION_CELL_FILTER, VERSION_GEOMUX,
-    VERSION_PYCYTO, uvx_command,
+    ArgsGeomux, CrisprMappingCommand, GexMappingCommand, PYCYTO_SPEC, VERSION_CELL_FILTER,
+    VERSION_GEOMUX, uvx_command, uvx_command_from,
 };
 use cyto_cli::{
     ibu::{ArgsCount, ArgsSort, ArgsUmi},
@@ -52,7 +52,7 @@ fn convert_to_h5ad<P: AsRef<Path>>(count_path: P) -> Result<()> {
         count_path.as_ref().display()
     );
 
-    let output = uvx_command("pycyto", VERSION_PYCYTO)
+    let output = uvx_command_from(PYCYTO_SPEC, "pycyto")
         .arg("convert")
         .arg(count_path.as_ref().display().to_string())
         .arg(format!("{}.h5ad", count_path.as_ref().display()))
@@ -80,6 +80,34 @@ fn convert_to_h5ad<P: AsRef<Path>>(count_path: P) -> Result<()> {
         );
     }
 
+    Ok(())
+}
+
+/// Write the QC report (`pycyto qc <outdir>`) for a finished run: `qc_report.html`
+/// plus the metric CSVs next to it. Runs last, after `.timings.tsv`, which the report
+/// reads along with `stats/` and the h5ads.
+///
+/// A failure is logged but does not fail the workflow: by this point every data
+/// output has been written.
+pub fn qc_report<P: AsRef<Path>>(outdir: P) -> Result<()> {
+    info!("Writing QC report for {}", outdir.as_ref().display());
+    let output = uvx_command_from(PYCYTO_SPEC, "pycyto")
+        .arg("qc")
+        .arg(outdir.as_ref().display().to_string())
+        .output()?;
+    if output.status.success() {
+        info!(
+            "QC report written to {}",
+            outdir.as_ref().join("qc_report.html").display()
+        );
+    } else {
+        error!(
+            "Unable to write the QC report for {}",
+            outdir.as_ref().display()
+        );
+        error!("stdout: {}", std::str::from_utf8(&output.stdout)?);
+        error!("stderr: {}", std::str::from_utf8(&output.stderr)?);
+    }
     Ok(())
 }
 
