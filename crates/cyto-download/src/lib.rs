@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use log::info;
 use tar::Archive;
 
-const GITHUB_REPO: &str = "ArcInstitute/cyto";
+const GITHUB_REPO: &str = "noamteyssier/cyto";
 const ASSET_NAME: &str = "cyto-resources.tar.gz";
 
 /// Returns the default resource directory: `~/.cyto/`
