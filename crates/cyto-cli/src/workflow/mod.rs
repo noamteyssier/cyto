@@ -8,9 +8,12 @@ use crate::{ArgsCrispr, ArgsGex};
 
 pub const VERSION_GEOMUX: &str = "0.5.5";
 pub const VERSION_CELL_FILTER: &str = "0.1.2";
-/// `uvx --from` source for pycyto (`convert` and `qc`). Temporarily the git branch
-/// that adds `pycyto qc`; switch back to a published pin (`pycyto==0.2.0`) once released.
-pub const PYCYTO_SPEC: &str = "git+https://github.com/noamteyssier/pycyto@dev-0.2.0";
+/// `uvx --from` source for pycyto (`convert` and `qc`). Temporarily a commit on the
+/// `dev-0.2.0` branch that adds `pycyto qc`; switch back to a published pin
+/// (`pycyto==0.2.0`) once released. Pinned to a commit rather than the branch so a
+/// pre-warmed `uv` cache or `uv tool install` of the same spec is reused offline.
+pub const PYCYTO_SPEC: &str =
+    "git+https://github.com/noamteyssier/pycyto@a727fd18da28ea15f8a1fcb157afeb03d6d7fe9c";
 
 #[derive(Subcommand, Debug)]
 pub enum WorkflowCommand {
