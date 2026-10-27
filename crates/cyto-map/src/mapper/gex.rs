@@ -173,16 +173,18 @@ mod tests {
 
     use std::io::Write;
 
-    /// Small mapper from the first probes of `gex_probes.tsv`; building the
+    /// Small mapper from the first 10 probes of `gex_probes.tsv`; building the
     /// full 54k-probe split hash takes seconds and these tests only need a few.
     fn test_mapper() -> GexMapper<Unpositioned> {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../data/libraries/gex_probes.tsv"
+        );
+        let probes = std::fs::read_to_string(path).unwrap();
         let mut file = tempfile::NamedTempFile::new().unwrap();
-        file.write_all(
-            b"ENSG00000000003|TSPAN6|8eab823\tTSPAN6\tGGTGACACCACAACAATGCAACGTATTTTGGATCTTGTCTACTGCATGGC\n\
-              ENSG00000000003|TSPAN6|9d7fe51\tTSPAN6\tTCTGCATCTCTCTGTGGAGTACAATCTTCAAGTTTACAGCAACTCTTAGG\n\
-              ENSG00000000003|TSPAN6|d2b5833\tTSPAN6\tAAAGCTGTTCTTAATCTCATGTCTGAAAACAAATCCTACGATGGCAGCGA\n",
-        )
-        .unwrap();
+        for line in probes.lines().take(10) {
+            writeln!(file, "{line}").unwrap();
+        }
         GexMapper::from_file(file.path(), 1).unwrap()
     }
 

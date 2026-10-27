@@ -19,8 +19,8 @@ fn workspace_root() -> PathBuf {
 // Building these mappers (especially the GEX split-hash over 54k probes) is the
 // dominant cost of this test file. All six tests use identical fixture files, so
 // each mapper is built once per test run and borrowed by every test instead of
-// being rebuilt from scratch in every test. The mappers are built concurrently
-// so the critical path is the slowest single build (GEX), not their sum.
+// being rebuilt from scratch in every test. GEX is built on its own thread so it
+// overlaps the other builds instead of adding to them.
 struct Fixtures {
     whitelist: WhitelistMapper<Unpositioned>,
     gex: GexMapper<Unpositioned>,
@@ -32,16 +32,6 @@ static FIXTURES: LazyLock<Fixtures> = LazyLock::new(|| {
     let root = workspace_root();
     std::thread::scope(|s| {
         let gex = s.spawn(|| GexMapper::from_file(root.join("data/libraries/gex_probes.tsv"), 1));
-        let crispr = s.spawn(|| {
-            CrisprMapper::from_file(root.join("data/libraries/crispr_guides.tsv"), false, 1)
-        });
-        let probe = s.spawn(|| {
-            ProbeMapper::from_file(
-                root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt"),
-                false,
-                1,
-            )
-        });
         // Exact-match whitelist: detection only needs enough sampled reads to
         // match, and the hamming-1 expansion of the 737k whitelist is very
         // expensive to build. Reduces runtime with minimal impact on predictions.
@@ -52,11 +42,20 @@ static FIXTURES: LazyLock<Fixtures> = LazyLock::new(|| {
             0,
         )
         .unwrap();
+        let crispr =
+            CrisprMapper::from_file(root.join("data/libraries/crispr_guides.tsv"), false, 1)
+                .unwrap();
+        let probe = ProbeMapper::from_file(
+            root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt"),
+            false,
+            1,
+        )
+        .unwrap();
         Fixtures {
             whitelist,
             gex: gex.join().unwrap().unwrap(),
-            crispr: crispr.join().unwrap().unwrap(),
-            probe: probe.join().unwrap().unwrap(),
+            crispr,
+            probe,
         }
     })
 });
