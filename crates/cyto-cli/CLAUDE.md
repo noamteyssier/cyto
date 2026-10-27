@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Defines all CLI argument structures using Clap. This crate is a pure definition layer — it contains no processing logic, only argument parsing, validation, and preset constants. All other crates depend on it for their argument types.
+Defines all CLI argument structures using Clap. This crate is a pure definition layer — it contains no processing logic, only argument parsing, validation, and preset constants. All other crates depend on it for their argument types. The workflow arg structs (and the enums they use, kebab-case like their CLI values) derive `serde::Serialize` so `cyto-workflow` can record every resolved option in `.done`.
 
 ## Key Source Files
 
 - `src/commands.rs` — Top-level `Commands` enum (`Workflow`, `Map`, `Detect`, `Ibu`)
 - `src/map/mod.rs` — `MapCommand` enum (Gex, Crispr) and geometry preset string constants (`GEOMETRY_GEX_FLEX_V1`, `GEOMETRY_GEX_FLEX_V2`, etc.)
-- `src/map/options.rs` — `MapOptions` (geometry DSL, preset selection, exact matching, remap window), `GeometryPreset` enum, `WhitelistOptions`, `ProbeOptions`
+- `src/map/options.rs` — `MapOptions` (geometry DSL, preset selection, exact matching, remap window; `geometry_or(default)` gives the geometry to map with: the preset's, else `--geometry`, else `default`), `GeometryPreset` enum, `WhitelistOptions`, `ProbeOptions`
 - `src/map/input.rs` — `MultiPairedInput` handles both BINSEQ (`.bq`/`.vbq`/`.cbq`) and FASTX paired-end inputs
 - `src/map/gex.rs` — `ArgsGex` flattens input, map options, GEX library path, runtime, and output
 - `src/map/crispr.rs` — `ArgsCrispr` same structure but with CRISPR guides path

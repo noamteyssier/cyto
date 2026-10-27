@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-pub fn run(args: &CrisprMappingCommand) -> Result<()> {
+pub fn run(args: &CrisprMappingCommand, cyto_version: &str) -> Result<()> {
     args.wf_args.validate_requirements(args.mode())?;
 
     // initialize the timing vector
@@ -73,6 +73,7 @@ pub fn run(args: &CrisprMappingCommand) -> Result<()> {
     write_done_file(
         &args.crispr_args.output.outdir,
         &RefWorkflowCommand::CrisprMapping(args),
+        cyto_version,
     )?;
     write_timings_file(&args.crispr_args.output.outdir, &all_timings.lock())?;
 

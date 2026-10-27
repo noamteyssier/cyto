@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
@@ -12,6 +11,7 @@ use cyto_cli::workflow::{
 };
 use cyto_cli::{
     ibu::{ArgsCount, ArgsSort, ArgsUmi},
+    map::{GEOMETRY_CRISPR_FLEX_V1, GEOMETRY_GEX_FLEX_V1, GeometryPreset},
     workflow::{ArgsWorkflow, WorkflowMode},
 };
 use glob::glob;
@@ -444,11 +444,42 @@ fn run_h5ad_steps<P: AsRef<Path>>(
     Ok(())
 }
 
-pub fn write_done_file<P: AsRef<Path>>(outdir: P, args: &RefWorkflowCommand) -> Result<()> {
-    let done_file = outdir.as_ref().join(".done");
-    let mut file = std::fs::File::create(&done_file)?;
-    writeln!(&mut file, "{args:#?}")?;
+pub fn write_done_file<P: AsRef<Path>>(
+    outdir: P,
+    args: &RefWorkflowCommand,
+    cyto_version: &str,
+) -> Result<()> {
+    let (workflow, map, default_geometry) = match args {
+        RefWorkflowCommand::GexMapping(a) => ("gex", &a.gex_args.map, GEOMETRY_GEX_FLEX_V1),
+        RefWorkflowCommand::CrisprMapping(a) => {
+            ("crispr", &a.crispr_args.map, GEOMETRY_CRISPR_FLEX_V1)
+        }
+    };
+    let record = RunRecord {
+        cyto_version,
+        workflow,
+        preset: map.preset,
+        geometry: map.geometry_or(default_geometry),
+        command: std::env::args().collect(),
+        args,
+    };
+    let mut json = serde_json::to_string_pretty(&record)?;
+    json.push('\n');
+    std::fs::write(outdir.as_ref().join(".done"), json)?;
     Ok(())
+}
+
+/// `.done`: the JSON run record `pycyto qc` reads
+#[derive(serde::Serialize)]
+struct RunRecord<'a> {
+    cyto_version: &'a str,
+    workflow: &'a str,
+    preset: Option<GeometryPreset>,
+    geometry: &'a str,
+    /// The command line as invoked (argv)
+    command: Vec<String>,
+    /// Every resolved option, defaults included
+    args: &'a RefWorkflowCommand<'a>,
 }
 
 pub fn write_timings_file<P: AsRef<Path>>(outdir: P, timings: &[ModuleTiming]) -> Result<()> {
@@ -471,8 +502,8 @@ pub fn remove_ibu_dir<P: AsRef<Path>>(path: P) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
+#[derive(Debug, serde::Serialize)]
+#[serde(untagged)]
 pub enum RefWorkflowCommand<'a> {
     GexMapping(&'a GexMappingCommand),
     CrisprMapping(&'a CrisprMappingCommand),

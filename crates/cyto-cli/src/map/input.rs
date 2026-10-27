@@ -6,7 +6,7 @@ pub use anyhow::bail;
 use log::error;
 use paraseq::{fastx, BoxedReader};
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "Paired input options")]
 pub struct MultiPairedInput {
     /// Paths to input files to process.

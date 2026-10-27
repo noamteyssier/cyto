@@ -8,7 +8,7 @@ use crate::ArgsOutput;
 
 use super::MapOptions;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 pub struct ArgsCrispr {
     #[clap(flatten)]
     pub input: MultiPairedInput,
@@ -26,7 +26,7 @@ pub struct ArgsCrispr {
     pub output: ArgsOutput,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "CRISPR Options")]
 pub struct CrisprOptions {
     /// Path to CRISPR guides library file

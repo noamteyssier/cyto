@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use cyto_io::validate_output_directory;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "Output Options")]
 pub struct ArgsOutput {
     /// Output directory path

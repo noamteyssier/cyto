@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[derive(Debug, Clone, Copy, Parser)]
+#[derive(Debug, serde::Serialize, Clone, Copy, Parser)]
 #[clap(next_help_heading = "Runtime Options")]
 pub struct RuntimeOptions {
     /// Number of threads to use [0: auto]

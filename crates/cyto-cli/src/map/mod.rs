@@ -7,7 +7,7 @@ mod runtime;
 pub use crispr::{ArgsCrispr, CrisprOptions};
 pub use gex::{ArgsGex, GexOptions};
 pub use input::MultiPairedInput;
-pub use options::{MapOptions, ProbeOptions, WhitelistOptions};
+pub use options::{GeometryPreset, MapOptions, ProbeOptions, WhitelistOptions};
 pub use runtime::RuntimeOptions;
 
 use std::path::PathBuf;

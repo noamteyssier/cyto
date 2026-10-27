@@ -36,7 +36,7 @@ impl WorkflowCommand {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 pub struct GexMappingCommand {
     #[clap(flatten)]
     pub gex_args: ArgsGex,
@@ -50,7 +50,7 @@ impl GexMappingCommand {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 pub struct CrisprMappingCommand {
     #[clap(flatten)]
     pub crispr_args: ArgsCrispr,
@@ -81,7 +81,7 @@ impl WorkflowMode {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "Workflow Options")]
 #[allow(clippy::struct_excessive_bools)] // each field is an independent CLI flag
 pub struct ArgsWorkflow {
@@ -173,7 +173,8 @@ impl ArgsWorkflow {
     }
 }
 
-#[derive(Clone, Copy, Default, Debug, clap::ValueEnum, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, Debug, serde::Serialize, clap::ValueEnum, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
 pub enum CountFormat {
     #[default]
     H5ad,
@@ -214,7 +215,7 @@ fn warm_uvx(name: &str, version: &str) -> Result<()> {
     }
 }
 
-#[derive(Parser, Debug, Clone, Copy)]
+#[derive(Parser, Debug, serde::Serialize, Clone, Copy)]
 #[clap(next_help_heading = "Geomux Options")]
 pub struct ArgsGeomux {
     /// Minimum number of UMIs required for a cell to be included in geomux testing.
@@ -245,7 +246,8 @@ impl ArgsGeomux {
     }
 }
 
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[derive(Debug, serde::Serialize, Clone, Copy, clap::ValueEnum)]
+#[serde(rename_all = "kebab-case")]
 pub enum GeomuxMode {
     /// Use the hypergeometric test.
     Geomux,

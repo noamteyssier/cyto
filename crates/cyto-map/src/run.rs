@@ -24,17 +24,9 @@ use crate::{
 };
 
 fn parse_geometry(args: &cyto_cli::map::MapOptions, default: &str) -> Result<Geometry> {
-    if let Some(preset) = args.preset {
-        let geometry_str = preset.geometry_str();
-        info!("Using preset ({preset:?}) geometry: `{geometry_str}`");
-        Ok(geometry_str.parse()?)
-    } else if let Some(ref g) = args.geometry {
-        info!("Using geometry: `{g}`");
-        Ok(g.parse()?)
-    } else {
-        info!("Using default geometry: `{default}`");
-        Ok(default.parse()?)
-    }
+    let geometry = args.geometry_or(default);
+    info!("Using geometry: `{geometry}` (preset: {:?})", args.preset);
+    Ok(geometry.parse()?)
 }
 
 fn load_probe(args: &cyto_cli::map::MapOptions) -> Result<Option<ProbeMapper<Unpositioned>>> {

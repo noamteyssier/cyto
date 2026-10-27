@@ -68,8 +68,12 @@ fn main() -> Result<()> {
             IbuCommand::Reads(args) => cyto_ibu_reads::run(&args),
         },
         Commands::Workflow(workflow) => match workflow {
-            WorkflowCommand::GexMapping(args) => cyto_workflow::gex::run(&args),
-            WorkflowCommand::CrisprMapping(args) => cyto_workflow::crispr::run(&args),
+            WorkflowCommand::GexMapping(args) => {
+                cyto_workflow::gex::run(&args, env!("CARGO_PKG_VERSION"))
+            }
+            WorkflowCommand::CrisprMapping(args) => {
+                cyto_workflow::crispr::run(&args, env!("CARGO_PKG_VERSION"))
+            }
         },
         Commands::Download(args) => cyto_download::run(&args, env!("CARGO_PKG_VERSION")),
     }?;

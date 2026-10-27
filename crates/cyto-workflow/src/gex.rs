@@ -20,7 +20,7 @@ use crate::{
 
 pub const DEFAULT_OUTPUT_BASENAME: &str = "output";
 
-pub fn run(args: &GexMappingCommand) -> Result<()> {
+pub fn run(args: &GexMappingCommand, cyto_version: &str) -> Result<()> {
     args.wf_args.validate_requirements(args.mode())?;
 
     // initialize the timing vector
@@ -75,6 +75,7 @@ pub fn run(args: &GexMappingCommand) -> Result<()> {
     write_done_file(
         &args.gex_args.output.outdir,
         &RefWorkflowCommand::GexMapping(args),
+        cyto_version,
     )?;
     write_timings_file(&args.gex_args.output.outdir, &all_timings.lock())?;
 

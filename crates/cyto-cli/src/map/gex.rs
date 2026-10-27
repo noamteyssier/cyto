@@ -8,7 +8,7 @@ use crate::ArgsOutput;
 
 use super::MapOptions;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 pub struct ArgsGex {
     #[clap(flatten)]
     pub input: MultiPairedInput,
@@ -26,7 +26,7 @@ pub struct ArgsGex {
     pub output: ArgsOutput,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "GEX Options")]
 pub struct GexOptions {
     /// Path to GEX library file

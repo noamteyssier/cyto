@@ -14,14 +14,14 @@ Orchestrates end-to-end analysis pipelines. Runs the full sequence: map -> sort 
   - `convert_to_h5ad()` — Runs `pycyto convert` via `uvx_command`, removes MTX directory on success
   - `filter_h5ad()` — Runs `cell-filter` (EmptyDrops) via `uvx_command`, handles missing filtered output gracefully
   - `assign_guides()` — Runs `geomux` via `uvx_command` with full parameter passthrough, handles known warning conditions
-  - `write_done_file()` / `write_timings_file()` — Writes workflow completion marker and timing TSV
+  - `write_done_file()` / `write_timings_file()` — Writes `.done`, the JSON run record `pycyto qc` reads (`cyto_version`, `workflow`, `preset` (CLI name or `null`), the `geometry` mapping used (`MapOptions::geometry_or`: the preset's, `--geometry`, or the workflow's V1 default), `command`: the argv as invoked, and `args`: every resolved option, defaults included, serialized from the `cyto-cli` arg structs; fields in that order via `RunRecord`), and the timing TSV
 - `src/timing.rs` — `ModuleTiming` (ibu_name, module, elapsed_secs), `Module` enum (Mapping, InitialSort, UmiCorrection, ReadsDump, Counting, ConversionH5ad, DropletFiltering, GuideAssignment)
 
 ## Key Types
 
 - `ModuleTiming` — Per-step timing record, serialized to `.timings.tsv`
 - `Module` — Enum for each pipeline step
-- `RefWorkflowCommand<'a>` — Debug-printable reference to workflow args, written to `.done` file
+- `RefWorkflowCommand<'a>` — Reference to the workflow args: `Serialize` (untagged): gives `.done` its `workflow`, geometry and `args`
 
 ## Design Notes
 
