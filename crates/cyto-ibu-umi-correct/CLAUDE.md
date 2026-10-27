@@ -17,7 +17,7 @@ Corrects UMI sequencing errors using graph-based connected components. Groups re
 ## Key Types
 
 - `BarcodeSetReader<It>` — Thread-safe barcode-grouped record reader
-- `Statistics` — Tracks total records, corrected count, fraction corrected (serialized to JSON)
+- `Statistics` — Tracks reads (records) and how many had their UMI corrected; serialized to `stats/umi/<probe>.umi.json` as `total_reads`, `corrected_reads`, `fraction_corrected` (0 without reads)
 
 ## Design Patterns
 

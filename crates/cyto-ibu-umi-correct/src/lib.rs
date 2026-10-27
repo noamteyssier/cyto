@@ -27,24 +27,29 @@ type TicketedRecords = (usize, Vec<Record>);
 
 #[derive(Serialize, Clone, Copy)]
 struct Statistics {
-    total: usize,
-    corrected: usize,
+    total_reads: usize,
+    corrected_reads: usize,
     fraction_corrected: f64,
 }
 impl Statistics {
-    pub fn new(total: usize, corrected: usize) -> Self {
+    pub fn new(total_reads: usize, corrected_reads: usize) -> Self {
         Self {
-            total,
-            corrected,
-            fraction_corrected: corrected as f64 / total as f64,
+            total_reads,
+            corrected_reads,
+            fraction_corrected: if total_reads > 0 {
+                corrected_reads as f64 / total_reads as f64
+            } else {
+                0.0
+            },
         }
     }
 }
 impl AddAssign for Statistics {
     fn add_assign(&mut self, other: Self) {
-        self.total += other.total;
-        self.corrected += other.corrected;
-        self.fraction_corrected = self.corrected as f64 / self.total as f64;
+        *self = Self::new(
+            self.total_reads + other.total_reads,
+            self.corrected_reads + other.corrected_reads,
+        );
     }
 }
 
