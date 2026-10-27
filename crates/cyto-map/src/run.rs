@@ -195,7 +195,7 @@ pub fn run_gex(args: &ArgsGex) -> Result<()> {
     let probe = probe.map(|p| p.resolve(&resolved)).transpose()?;
     let whitelist = whitelist.resolve(&resolved)?;
     let gex = gex.resolve(&resolved)?;
-    let umi = UmiMapper::resolve(&resolved)?;
+    let umi = UmiMapper::resolve(&resolved, args.map.umi_min_qual)?;
 
     run_pipeline(
         probe,
@@ -240,7 +240,7 @@ pub fn run_crispr(args: &ArgsCrispr) -> Result<()> {
     let probe = probe.map(|p| p.resolve(&resolved)).transpose()?;
     let whitelist = whitelist.resolve(&resolved)?;
     let crispr = crispr.resolve(&resolved)?;
-    let umi = UmiMapper::resolve(&resolved)?;
+    let umi = UmiMapper::resolve(&resolved, args.map.umi_min_qual)?;
 
     run_pipeline(
         probe,

@@ -4,6 +4,9 @@ use crate::map::{GEOMETRY_CRISPR_FLEX_V2, GEOMETRY_GEX_FLEX_V2, GEOMETRY_GEX_FLE
 
 use super::{GEOMETRY_CRISPR_FLEX_V1, GEOMETRY_CRISPR_PROPERSEQ, GEOMETRY_GEX_FLEX_V1};
 
+/// Default minimum Phred quality for every UMI base
+pub const UMI_MIN_QUALITY: u8 = 10;
+
 #[derive(Parser, Debug, serde::Serialize)]
 #[clap(next_help_heading = "Mapping Options")]
 pub struct MapOptions {
@@ -31,9 +34,9 @@ pub struct MapOptions {
     #[clap(short = 'x', long)]
     pub exact: bool,
 
-    /// Skip UMI quality check
-    #[clap(long)]
-    pub no_umi_qual_check: bool,
+    /// Minimum Phred quality required at every UMI base (0 to disable)
+    #[clap(long, default_value_t = UMI_MIN_QUALITY)]
+    pub umi_min_qual: u8,
 
     #[clap(flatten)]
     whitelist: WhitelistOptions,

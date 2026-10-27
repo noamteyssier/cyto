@@ -22,5 +22,5 @@ pub use processor::MapProcessor;
 pub use run::{run_crispr, run_detect_crispr, run_detect_gex, run_gex};
 pub use utils::initialize_output_ibus;
 
-pub const UMI_MIN_QUALITY: u8 = 10;
+pub use cyto_cli::map::UMI_MIN_QUALITY;
 pub const ILLUMINA_QUALITY_OFFSET: u8 = 33;
