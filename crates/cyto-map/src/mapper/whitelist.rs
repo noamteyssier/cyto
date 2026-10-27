@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -19,7 +20,8 @@ struct Whitelist {
 
 #[derive(Clone)]
 pub struct WhitelistMapper<S = Ready> {
-    hash: SeqHash,
+    /// `Arc`-shared so cloning a mapper is O(1).
+    hash: Arc<SeqHash>,
     pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -64,7 +66,7 @@ impl WhitelistMapper<Unpositioned> {
         );
 
         Ok(Self {
-            hash,
+            hash: Arc::new(hash),
             pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,
@@ -153,19 +155,20 @@ impl Library for WhitelistMapper<Ready> {
 mod tests {
     use super::*;
 
-    fn workspace_root() -> std::path::PathBuf {
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf()
+    use std::io::Write;
+
+    /// Small mapper from the first barcodes of the 737k whitelist; building the
+    /// full index takes seconds and these tests only need a few.
+    fn test_mapper() -> WhitelistMapper<Unpositioned> {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(b"AAACAAGCAAACAAGA\nAAACAAGCAAACAATC\nAAACAAGCAAACACGC\n")
+            .unwrap();
+        WhitelistMapper::from_file(file.path(), true, 1, 1).unwrap()
     }
 
     #[test]
     fn test_scan_positions_finds_barcode() {
-        let whitelist_path = workspace_root().join("data/metadata/737K-fixed-rna-profiling.txt.gz");
-        let mapper = WhitelistMapper::from_file(&whitelist_path, true, 1, 1).unwrap();
+        let mapper = test_mapper();
 
         assert_eq!(mapper.seq_len(), 16);
 
@@ -194,8 +197,7 @@ mod tests {
 
     #[test]
     fn test_scan_positions_no_match_on_random_seq() {
-        let whitelist_path = workspace_root().join("data/metadata/737K-fixed-rna-profiling.txt.gz");
-        let mapper = WhitelistMapper::from_file(&whitelist_path, true, 1, 1).unwrap();
+        let mapper = test_mapper();
 
         // All Ns should not match any barcode
         let random_read = b"NNNNNNNNNNNNNNNNNNNNNNNNNNNN";

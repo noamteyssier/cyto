@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -21,7 +22,8 @@ struct GexRecord {
 
 #[derive(Clone)]
 pub struct GexMapper<S = Ready> {
-    split_hash: SplitSeqHash,
+    /// `Arc`-shared so cloning a mapper is O(1).
+    split_hash: Arc<SplitSeqHash>,
     probe_names: Vec<String>,
     gene_names: Vec<String>,
     pos: usize,
@@ -60,7 +62,7 @@ impl GexMapper<Unpositioned> {
         );
 
         Ok(Self {
-            split_hash,
+            split_hash: Arc::new(split_hash),
             gene_names,
             probe_names,
             pos: 0,
@@ -169,19 +171,26 @@ impl<'a, T> FeatureWriter<'a> for GexMapper<T> {
 mod tests {
     use super::*;
 
-    fn workspace_root() -> std::path::PathBuf {
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf()
+    use std::io::Write;
+
+    /// Small mapper from the first 10 probes of `gex_probes.tsv`; building the
+    /// full 54k-probe split hash takes seconds and these tests only need a few.
+    fn test_mapper() -> GexMapper<Unpositioned> {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../data/libraries/gex_probes.tsv"
+        );
+        let probes = std::fs::read_to_string(path).unwrap();
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        for line in probes.lines().take(10) {
+            writeln!(file, "{line}").unwrap();
+        }
+        GexMapper::from_file(file.path(), 1).unwrap()
     }
 
     #[test]
     fn test_scan_positions_finds_gex_probe() {
-        let gex_path = workspace_root().join("data/libraries/gex_probes.tsv");
-        let mapper = GexMapper::from_file(&gex_path, 1).unwrap();
+        let mapper = test_mapper();
 
         assert_eq!(mapper.seq_len(), 50);
 
@@ -210,8 +219,7 @@ mod tests {
 
     #[test]
     fn test_scan_positions_no_match_on_random_seq() {
-        let gex_path = workspace_root().join("data/libraries/gex_probes.tsv");
-        let mapper = GexMapper::from_file(&gex_path, 1).unwrap();
+        let mapper = test_mapper();
 
         // Random sequence should not match
         let random_read = vec![b'N'; 100];

@@ -53,7 +53,7 @@ pub fn run_detect_gex(args: &ArgsDetectGex) -> Result<()> {
         remap_min_proportion: args.detection.remap_min_proportion,
         num_threads,
     };
-    let result = detect_gex_geometry(whitelist, gex, probe, &args.input, &config)?;
+    let result = detect_gex_geometry(&whitelist, &gex, probe.as_ref(), &args.input, &config)?;
     log_detection_result(&result);
     if let Some(preset) = preset_name_for_geometry(&result.geometry_string) {
         info!("Detected geometry matches preset `{preset}`");
@@ -74,7 +74,7 @@ pub fn run_detect_crispr(args: &ArgsDetectCrispr) -> Result<()> {
         remap_min_proportion: args.detection.remap_min_proportion,
         num_threads,
     };
-    let result = detect_crispr_geometry(whitelist, crispr, probe, &args.input, &config)?;
+    let result = detect_crispr_geometry(&whitelist, &crispr, probe.as_ref(), &args.input, &config)?;
     log_detection_result(&result);
     if let Some(preset) = preset_name_for_geometry(&result.geometry_string) {
         info!("Detected geometry matches preset `{preset}`");

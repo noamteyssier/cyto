@@ -18,31 +18,46 @@ fn workspace_root() -> PathBuf {
 
 // Building these mappers (especially the GEX split-hash over 54k probes) is the
 // dominant cost of this test file. All six tests use identical fixture files, so
-// each mapper is built once per test run and cheaply `.clone()`d per test instead
-// of being rebuilt from scratch in every test.
+// each mapper is built once per test run and borrowed by every test instead of
+// being rebuilt from scratch in every test. GEX is built on its own thread so it
+// overlaps the other builds instead of adding to them.
+struct Fixtures {
+    whitelist: WhitelistMapper<Unpositioned>,
+    gex: GexMapper<Unpositioned>,
+    crispr: CrisprMapper<Unpositioned>,
+    probe: ProbeMapper<Unpositioned>,
+}
 
-/// Exact-match whitelist: detection only needs enough sampled reads to match,
-/// and the hamming-1 expansion of the 737k whitelist is very expensive to build.
-///
-/// reduces runtime during the tests with minimal impact on predictions
-static WHITELIST: LazyLock<WhitelistMapper<Unpositioned>> = LazyLock::new(|| {
-    let path = workspace_root().join("data/metadata/737K-fixed-rna-profiling.txt.gz");
-    WhitelistMapper::from_file(&path, true, 1, 1).unwrap()
-});
-
-static GEX: LazyLock<GexMapper<Unpositioned>> = LazyLock::new(|| {
-    let path = workspace_root().join("data/libraries/gex_probes.tsv");
-    GexMapper::from_file(&path, 1).unwrap()
-});
-
-static CRISPR: LazyLock<CrisprMapper<Unpositioned>> = LazyLock::new(|| {
-    let path = workspace_root().join("data/libraries/crispr_guides.tsv");
-    CrisprMapper::from_file(&path, false, 1).unwrap()
-});
-
-static PROBE: LazyLock<ProbeMapper<Unpositioned>> = LazyLock::new(|| {
-    let path = workspace_root().join("data/metadata/probe-barcodes-fixed-rna-profiling.txt");
-    ProbeMapper::from_file(&path, false, 1).unwrap()
+static FIXTURES: LazyLock<Fixtures> = LazyLock::new(|| {
+    let root = workspace_root();
+    std::thread::scope(|s| {
+        let gex = s.spawn(|| GexMapper::from_file(root.join("data/libraries/gex_probes.tsv"), 1));
+        // Exact-match whitelist: detection only needs enough sampled reads to
+        // match, and the hamming-1 expansion of the 737k whitelist is very
+        // expensive to build. Reduces runtime with minimal impact on predictions.
+        let whitelist = WhitelistMapper::from_file(
+            root.join("data/metadata/737K-fixed-rna-profiling.txt.gz"),
+            true,
+            1,
+            0,
+        )
+        .unwrap();
+        let crispr =
+            CrisprMapper::from_file(root.join("data/libraries/crispr_guides.tsv"), false, 1)
+                .unwrap();
+        let probe = ProbeMapper::from_file(
+            root.join("data/metadata/probe-barcodes-fixed-rna-profiling.txt"),
+            false,
+            1,
+        )
+        .unwrap();
+        Fixtures {
+            whitelist,
+            gex: gex.join().unwrap().unwrap(),
+            crispr,
+            probe,
+        }
+    })
 });
 
 #[test]
@@ -50,10 +65,6 @@ fn test_detect_gex_geometry_from_binseq() {
     let root = workspace_root();
 
     let input_path = root.join("data/sequencing/gex.cbq");
-
-    let whitelist = WHITELIST.clone();
-    let gex = GEX.clone();
-    let probe = PROBE.clone();
 
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
@@ -66,7 +77,9 @@ fn test_detect_gex_geometry_from_binseq() {
         num_threads: 1,
     };
 
-    let result = detect_gex_geometry(whitelist, gex, Some(probe), &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result =
+        detect_gex_geometry(&f.whitelist, &f.gex, Some(&f.probe), &input, &config).unwrap();
 
     // Expected V1 geometry: [barcode][umi:12] | [gex][:18][probe]
     assert_eq!(
@@ -126,9 +139,6 @@ fn test_detect_crispr_geometry_from_binseq() {
 
     let input_path = root.join("data/sequencing/crispr.cbq");
 
-    let whitelist = WHITELIST.clone();
-    let crispr = CRISPR.clone();
-
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
     };
@@ -140,7 +150,8 @@ fn test_detect_crispr_geometry_from_binseq() {
         num_threads: 1,
     };
 
-    let result = detect_crispr_geometry(whitelist, crispr, None, &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result = detect_crispr_geometry(&f.whitelist, &f.crispr, None, &input, &config).unwrap();
 
     // Verify the geometry contains the expected CRISPR components
     let gs = &result.geometry_string;
@@ -177,9 +188,6 @@ fn test_detect_gex_geometry_unprobed() {
 
     let input_path = root.join("data/sequencing/gex.cbq");
 
-    let whitelist = WHITELIST.clone();
-    let gex = GEX.clone();
-
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
     };
@@ -191,7 +199,8 @@ fn test_detect_gex_geometry_unprobed() {
         num_threads: 1,
     };
 
-    let result = detect_gex_geometry(whitelist, gex, None, &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result = detect_gex_geometry(&f.whitelist, &f.gex, None, &input, &config).unwrap();
 
     // Verify the geometry contains the expected GEX components without probe
     let gs = &result.geometry_string;
@@ -224,10 +233,6 @@ fn test_detect_crispr_geometry_probed() {
 
     let input_path = root.join("data/sequencing/crispr.cbq");
 
-    let whitelist = WHITELIST.clone();
-    let crispr = CRISPR.clone();
-    let probe = PROBE.clone();
-
     let input = MultiPairedInput {
         inputs: vec![input_path.to_string_lossy().to_string()],
     };
@@ -239,7 +244,9 @@ fn test_detect_crispr_geometry_probed() {
         num_threads: 1,
     };
 
-    let result = detect_crispr_geometry(whitelist, crispr, Some(probe), &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result =
+        detect_crispr_geometry(&f.whitelist, &f.crispr, Some(&f.probe), &input, &config).unwrap();
 
     // Verify the geometry contains the expected CRISPR components with probe
     let gs = &result.geometry_string;
@@ -297,13 +304,12 @@ fn test_detect_gex_geometry_multi_lane_binseq() {
         num_threads: 1,
     };
 
-    let whitelist = WHITELIST.clone();
-    let gex = GEX.clone();
-    let probe = PROBE.clone();
     let input = MultiPairedInput {
         inputs: vec![path.clone(), path],
     };
-    let result = detect_gex_geometry(whitelist, gex, Some(probe), &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result =
+        detect_gex_geometry(&f.whitelist, &f.gex, Some(&f.probe), &input, &config).unwrap();
 
     assert_eq!(
         result.geometry_string, "[barcode][umi:12] | [gex][:18][probe]",
@@ -340,10 +346,6 @@ fn test_detect_gex_geometry_multi_lane_fastx() {
         .to_string_lossy()
         .to_string();
 
-    let whitelist = WHITELIST.clone();
-    let gex = GEX.clone();
-    let probe = PROBE.clone();
-
     let input = MultiPairedInput {
         inputs: vec![r1.clone(), r2.clone(), r1, r2],
     };
@@ -354,7 +356,9 @@ fn test_detect_gex_geometry_multi_lane_fastx() {
         num_threads: 1,
     };
 
-    let result = detect_gex_geometry(whitelist, gex, Some(probe), &input, &config).unwrap();
+    let f = &*FIXTURES;
+    let result =
+        detect_gex_geometry(&f.whitelist, &f.gex, Some(&f.probe), &input, &config).unwrap();
 
     assert_eq!(
         result.geometry_string, "[barcode][umi:12] | [gex][:18][probe]",

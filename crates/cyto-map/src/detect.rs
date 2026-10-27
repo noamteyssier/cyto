@@ -335,20 +335,19 @@ impl<Rf: paraseq::Record> paraseq::prelude::PairedParallelProcessor<Rf>
 
 /// Sample reads for GEX detection, returning per-file accumulators.
 ///
-/// Moves the mappers into shared state. Returns one `(label, accumulator)`
-/// per input lane. For BINSEQ each file is one lane; for FASTX each
+/// Returns one `(label, accumulator)` per input lane. For BINSEQ each file is one lane; for FASTX each
 /// consecutive pair of files is one lane.
 fn sample_gex_reads(
-    whitelist: WhitelistMapper<Unpositioned>,
-    gex: GexMapper<Unpositioned>,
-    probe: Option<ProbeMapper<Unpositioned>>,
+    whitelist: &WhitelistMapper<Unpositioned>,
+    gex: &GexMapper<Unpositioned>,
+    probe: Option<&ProbeMapper<Unpositioned>>,
     input: &MultiPairedInput,
     config: &DetectionConfig,
 ) -> Result<Vec<(String, PositionAccumulator)>> {
     let shared = Arc::new(GexSharedState {
-        whitelist,
-        gex,
-        probe,
+        whitelist: whitelist.clone(),
+        gex: gex.clone(),
+        probe: probe.cloned(),
         global_accumulator: Mutex::new(PositionAccumulator::default()),
         counter: AtomicUsize::new(0),
         limit: config.num_reads,
@@ -411,19 +410,18 @@ fn sample_gex_reads(
 
 /// Sample reads for CRISPR detection, returning per-file accumulators.
 ///
-/// Moves the mappers into shared state. Returns one `(label, accumulator)`
-/// per input lane.
+/// Returns one `(label, accumulator)` per input lane.
 fn sample_crispr_reads(
-    whitelist: WhitelistMapper<Unpositioned>,
-    crispr: CrisprMapper<Unpositioned>,
-    probe: Option<ProbeMapper<Unpositioned>>,
+    whitelist: &WhitelistMapper<Unpositioned>,
+    crispr: &CrisprMapper<Unpositioned>,
+    probe: Option<&ProbeMapper<Unpositioned>>,
     input: &MultiPairedInput,
     config: &DetectionConfig,
 ) -> Result<Vec<(String, PositionAccumulator)>> {
     let shared = Arc::new(CrisprSharedState {
-        whitelist,
-        crispr,
-        probe,
+        whitelist: whitelist.clone(),
+        crispr: crispr.clone(),
+        probe: probe.cloned(),
         global_accumulator: Mutex::new(PositionAccumulator::default()),
         counter: AtomicUsize::new(0),
     });
@@ -1259,13 +1257,10 @@ fn log_top_alternatives(ev: &ComponentEvidence) {
 ///
 /// Samples each lane independently and reconciles them via [`finalize_detection`]
 /// (pool, per-lane-max accept, cross-lane consistency, advisory remap window).
-///
-/// The mappers are moved into the detection processor and consumed; create fresh
-/// mappers for the mapping pipeline after detection returns.
 pub fn detect_gex_geometry(
-    whitelist: WhitelistMapper<Unpositioned>,
-    gex: GexMapper<Unpositioned>,
-    probe: Option<ProbeMapper<Unpositioned>>,
+    whitelist: &WhitelistMapper<Unpositioned>,
+    gex: &GexMapper<Unpositioned>,
+    probe: Option<&ProbeMapper<Unpositioned>>,
     input: &MultiPairedInput,
     config: &DetectionConfig,
 ) -> Result<DetectionResult> {
@@ -1284,7 +1279,7 @@ pub fn detect_gex_geometry(
     let mut component_seq_lens: HashMap<Component, Option<usize>> = HashMap::new();
     component_seq_lens.insert(Component::Barcode, Some(whitelist.seq_len()));
     component_seq_lens.insert(Component::Gex, Some(gex.seq_len()));
-    if let Some(ref p) = probe {
+    if let Some(p) = probe {
         component_seq_lens.insert(Component::Probe, Some(p.seq_len()));
     }
 
@@ -1304,12 +1299,10 @@ pub fn detect_gex_geometry(
 ///
 /// Samples each lane independently and reconciles them via [`finalize_detection`]
 /// (pool, per-lane-max accept, cross-lane consistency, advisory remap window).
-///
-/// The mappers are moved into the detection processor and consumed.
 pub fn detect_crispr_geometry(
-    whitelist: WhitelistMapper<Unpositioned>,
-    crispr: CrisprMapper<Unpositioned>,
-    probe: Option<ProbeMapper<Unpositioned>>,
+    whitelist: &WhitelistMapper<Unpositioned>,
+    crispr: &CrisprMapper<Unpositioned>,
+    probe: Option<&ProbeMapper<Unpositioned>>,
     input: &MultiPairedInput,
     config: &DetectionConfig,
 ) -> Result<DetectionResult> {
@@ -1329,7 +1322,7 @@ pub fn detect_crispr_geometry(
     component_seq_lens.insert(Component::Barcode, Some(whitelist.seq_len()));
     component_seq_lens.insert(Component::Anchor, crispr.anchor_len());
     component_seq_lens.insert(Component::Protospacer, Some(crispr.protospacer_len()));
-    if let Some(ref p) = probe {
+    if let Some(p) = probe {
         component_seq_lens.insert(Component::Probe, Some(p.seq_len()));
     }
 
