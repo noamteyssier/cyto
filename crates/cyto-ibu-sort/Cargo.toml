@@ -16,8 +16,8 @@ cyto-io = { workspace = true }
 ibu = { workspace = true, features = ["serde"] }
 log = { workspace = true }
 
-ext-sort = { version = "0.1.5", features = ["memory-limit"] }
-bytesize = "2.3.1"
+ext-sort = { version = "0.1.6", features = ["memory-limit"] }
+bytesize = "2.7.0"
 
 [lints]
 workspace = true
