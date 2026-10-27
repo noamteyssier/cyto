@@ -169,19 +169,24 @@ impl<'a, T> FeatureWriter<'a> for GexMapper<T> {
 mod tests {
     use super::*;
 
-    fn workspace_root() -> std::path::PathBuf {
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf()
+    use std::io::Write;
+
+    /// Small mapper from the first probes of `gex_probes.tsv`; building the
+    /// full 54k-probe split hash takes seconds and these tests only need a few.
+    fn test_mapper() -> GexMapper<Unpositioned> {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(
+            b"ENSG00000000003|TSPAN6|8eab823\tTSPAN6\tGGTGACACCACAACAATGCAACGTATTTTGGATCTTGTCTACTGCATGGC\n\
+              ENSG00000000003|TSPAN6|9d7fe51\tTSPAN6\tTCTGCATCTCTCTGTGGAGTACAATCTTCAAGTTTACAGCAACTCTTAGG\n\
+              ENSG00000000003|TSPAN6|d2b5833\tTSPAN6\tAAAGCTGTTCTTAATCTCATGTCTGAAAACAAATCCTACGATGGCAGCGA\n",
+        )
+        .unwrap();
+        GexMapper::from_file(file.path(), 1).unwrap()
     }
 
     #[test]
     fn test_scan_positions_finds_gex_probe() {
-        let gex_path = workspace_root().join("data/libraries/gex_probes.tsv");
-        let mapper = GexMapper::from_file(&gex_path, 1).unwrap();
+        let mapper = test_mapper();
 
         assert_eq!(mapper.seq_len(), 50);
 
@@ -210,8 +215,7 @@ mod tests {
 
     #[test]
     fn test_scan_positions_no_match_on_random_seq() {
-        let gex_path = workspace_root().join("data/libraries/gex_probes.tsv");
-        let mapper = GexMapper::from_file(&gex_path, 1).unwrap();
+        let mapper = test_mapper();
 
         // Random sequence should not match
         let random_read = vec![b'N'; 100];
