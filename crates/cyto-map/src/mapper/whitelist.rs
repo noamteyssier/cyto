@@ -20,6 +20,7 @@ struct Whitelist {
 
 #[derive(Clone)]
 pub struct WhitelistMapper<S = Ready> {
+    /// `Arc`-shared so cloning a mapper is O(1).
     hash: Arc<SeqHash>,
     pos: usize,
     mate: ReadMate,

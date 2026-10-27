@@ -22,8 +22,9 @@ struct ProbeRecord {
 }
 #[derive(Clone)]
 pub struct ProbeMapper<S = Ready> {
+    /// `Arc`-shared so cloning a mapper is O(1).
     hash: Arc<SeqHash>,
-    aliases: Arc<Vec<String>>,
+    aliases: Vec<String>,
     pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -108,7 +109,7 @@ impl ProbeMapper<Unpositioned> {
         );
         Ok(Self {
             hash: Arc::new(hash),
-            aliases: Arc::new(aliases),
+            aliases,
             pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,

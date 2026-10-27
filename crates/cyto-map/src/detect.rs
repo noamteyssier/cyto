@@ -335,8 +335,7 @@ impl<Rf: paraseq::Record> paraseq::prelude::PairedParallelProcessor<Rf>
 
 /// Sample reads for GEX detection, returning per-file accumulators.
 ///
-/// Clones the (`Arc`-backed) mappers into shared state. Returns one `(label, accumulator)`
-/// per input lane. For BINSEQ each file is one lane; for FASTX each
+/// Returns one `(label, accumulator)` per input lane. For BINSEQ each file is one lane; for FASTX each
 /// consecutive pair of files is one lane.
 fn sample_gex_reads(
     whitelist: &WhitelistMapper<Unpositioned>,
@@ -411,8 +410,7 @@ fn sample_gex_reads(
 
 /// Sample reads for CRISPR detection, returning per-file accumulators.
 ///
-/// Clones the (`Arc`-backed) mappers into shared state. Returns one `(label, accumulator)`
-/// per input lane.
+/// Returns one `(label, accumulator)` per input lane.
 fn sample_crispr_reads(
     whitelist: &WhitelistMapper<Unpositioned>,
     crispr: &CrisprMapper<Unpositioned>,
@@ -1259,9 +1257,6 @@ fn log_top_alternatives(ev: &ComponentEvidence) {
 ///
 /// Samples each lane independently and reconciles them via [`finalize_detection`]
 /// (pool, per-lane-max accept, cross-lane consistency, advisory remap window).
-///
-/// The mappers are borrowed; their indexes are `Arc`-shared, so the internal
-/// clone into the detection processors is cheap.
 pub fn detect_gex_geometry(
     whitelist: &WhitelistMapper<Unpositioned>,
     gex: &GexMapper<Unpositioned>,
@@ -1304,8 +1299,6 @@ pub fn detect_gex_geometry(
 ///
 /// Samples each lane independently and reconciles them via [`finalize_detection`]
 /// (pool, per-lane-max accept, cross-lane consistency, advisory remap window).
-///
-/// The mappers are borrowed (cheap `Arc`-shared clone internally).
 pub fn detect_crispr_geometry(
     whitelist: &WhitelistMapper<Unpositioned>,
     crispr: &CrisprMapper<Unpositioned>,

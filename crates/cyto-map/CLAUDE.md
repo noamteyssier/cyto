@@ -10,7 +10,7 @@ Core mapping engine. Maps paired-end sequencing reads to features (genes, CRISPR
 - `src/geometry.rs` — Geometry DSL parser and resolver. Parses bracket notation (e.g. `[barcode][umi:12][:10][probe] | [gex]`) into `Geometry` → resolves to `ResolvedGeometry` with concrete byte offsets and read mates. `has_component()` checks whether a geometry includes a given component (used for probe validation). Extensive unit tests (~300 lines).
 - `src/mapper/mod.rs` — `Mapper` trait (`query(&self, seq) -> Option<usize>`, `mate() -> ReadMate`), `Library` trait (statistics), typestate markers (`Unpositioned`, `Ready`)
 - `src/mapper/gex.rs` — `GexMapper<S>`: maps GEX probes via `SplitSeqHash`. Two-half matching with configurable hamming distance (`GEX_MAX_HDIST=3`). Implements `FeatureWriter`.
-- Mapper hash indexes and name vectors are `Arc`-wrapped, so cloning any mapper is O(1).
+- Mapper hash indexes are `Arc`-wrapped, so cloning any mapper is O(1).
 - `src/mapper/crispr.rs` — `CrisprMapper<S>`: two-stage matching — `MultiLenSeqHash` for variable-length anchors, then `SeqHash` for fixed-length protospacers. Protospacer offset computed dynamically from anchor match.
 - `src/mapper/whitelist.rs` — `WhitelistMapper<S>`: cell barcode correction via `SeqHash`. Returns 2-bit encoded barcodes. Supports parallelized hash build.
 - `src/mapper/probe.rs` — `ProbeMapper<S>`: demultiplexing probe mapper with optional regex filtering on aliases. Creates `Bijection` for unique probe-to-index mapping.

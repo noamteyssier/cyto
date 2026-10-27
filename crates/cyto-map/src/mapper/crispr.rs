@@ -22,9 +22,10 @@ struct CrisprRecord {
 
 #[derive(Clone)]
 pub struct CrisprMapper<S = Ready> {
+    /// Hash indexes are `Arc`-shared so cloning a mapper is O(1).
     anchor_hash: Arc<MultiLenSeqHash>,
     protospacer_hash: Arc<MultiLenSeqHash>,
-    names: Arc<Vec<String>>,
+    names: Vec<String>,
     anchor_pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -75,7 +76,7 @@ impl CrisprMapper<Unpositioned> {
         Ok(Self {
             anchor_hash: Arc::new(anchor_hash),
             protospacer_hash: Arc::new(protospacer_hash),
-            names: Arc::new(names),
+            names,
             anchor_pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,
