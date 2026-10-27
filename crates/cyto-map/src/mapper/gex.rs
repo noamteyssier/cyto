@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -21,9 +22,9 @@ struct GexRecord {
 
 #[derive(Clone)]
 pub struct GexMapper<S = Ready> {
-    split_hash: SplitSeqHash,
-    probe_names: Vec<String>,
-    gene_names: Vec<String>,
+    split_hash: Arc<SplitSeqHash>,
+    probe_names: Arc<Vec<String>>,
+    gene_names: Arc<Vec<String>>,
     pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -60,9 +61,9 @@ impl GexMapper<Unpositioned> {
         );
 
         Ok(Self {
-            split_hash,
-            gene_names,
-            probe_names,
+            split_hash: Arc::new(split_hash),
+            gene_names: Arc::new(gene_names),
+            probe_names: Arc::new(probe_names),
             pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,

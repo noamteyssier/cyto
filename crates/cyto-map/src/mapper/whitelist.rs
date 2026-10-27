@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -19,7 +20,7 @@ struct Whitelist {
 
 #[derive(Clone)]
 pub struct WhitelistMapper<S = Ready> {
-    hash: SeqHash,
+    hash: Arc<SeqHash>,
     pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -64,7 +65,7 @@ impl WhitelistMapper<Unpositioned> {
         );
 
         Ok(Self {
-            hash,
+            hash: Arc::new(hash),
             pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,

@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -21,9 +22,9 @@ struct CrisprRecord {
 
 #[derive(Clone)]
 pub struct CrisprMapper<S = Ready> {
-    anchor_hash: MultiLenSeqHash,
-    protospacer_hash: MultiLenSeqHash,
-    names: Vec<String>,
+    anchor_hash: Arc<MultiLenSeqHash>,
+    protospacer_hash: Arc<MultiLenSeqHash>,
+    names: Arc<Vec<String>>,
     anchor_pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -72,9 +73,9 @@ impl CrisprMapper<Unpositioned> {
         );
 
         Ok(Self {
-            anchor_hash,
-            protospacer_hash,
-            names,
+            anchor_hash: Arc::new(anchor_hash),
+            protospacer_hash: Arc::new(protospacer_hash),
+            names: Arc::new(names),
             anchor_pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,

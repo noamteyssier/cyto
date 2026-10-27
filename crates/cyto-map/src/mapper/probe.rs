@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Result, bail};
@@ -21,8 +22,8 @@ struct ProbeRecord {
 }
 #[derive(Clone)]
 pub struct ProbeMapper<S = Ready> {
-    hash: SeqHash,
-    aliases: Vec<String>,
+    hash: Arc<SeqHash>,
+    aliases: Arc<Vec<String>>,
     pos: usize,
     mate: ReadMate,
     init_time: f64,
@@ -106,8 +107,8 @@ impl ProbeMapper<Unpositioned> {
             init_time * 1000.0
         );
         Ok(Self {
-            hash,
-            aliases,
+            hash: Arc::new(hash),
+            aliases: Arc::new(aliases),
             pos: 0,
             mate: ReadMate::R1,
             _state: PhantomData,
