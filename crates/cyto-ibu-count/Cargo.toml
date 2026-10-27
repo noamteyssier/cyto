@@ -20,8 +20,8 @@ log = { workspace = true }
 hashbrown = { workspace = true }
 serde = { workspace = true }
 
-gzp = "2.0.2"
-thiserror = "2.0.18"
+gzp = "2.0.4"
+thiserror = "2.0.21"
 
 [lints]
 workspace = true

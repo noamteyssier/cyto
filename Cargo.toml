@@ -15,20 +15,20 @@ cyto-io = { path = "crates/cyto-io", version = "0.2.0" }
 cyto-map = { path = "crates/cyto-map", version = "0.6.0" }
 cyto-workflow = { path = "crates/cyto-workflow", version = "0.3.3" }
 
-anyhow = "1.0.102"
-binseq = { version = "0.9.0", default-features = false, features = ["anyhow"] }
-bitnuc = "0.5.6"
-clap = { version = "4.5.60", features = ["derive"] }
+anyhow = "1.0.104"
+binseq = { version = "0.10.0", default-features = false, features = ["anyhow"] }
+bitnuc = "0.5.7"
+clap = { version = "4.6.7", features = ["derive"] }
 csv = "1.4.0"
-env_logger = "0.11.9"
-hashbrown = "0.16.1"
+env_logger = "0.11.11"
+hashbrown = "0.17.1"
 ibu = "0.3.0"
-log = "0.4.29"
-niffler = { version = "3.0.0", features = ["gz"] }
-paraseq = "0.6.0"
-parking_lot = "0.12"
+log = "0.4.34"
+niffler = { version = "3.0.1", features = ["gz"] }
+paraseq = "0.6.2"
+parking_lot = "0.13"
 serde = { version = "1", default-features = false, features = ["derive"] }
-serde_json = "1.0.149"
+serde_json = "1.0.154"
 
 # Optimize third-party deps (seqhash, flate2, ...) in dev/test builds; workspace
 # crates stay unoptimized for fast incremental compiles.
